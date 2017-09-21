@@ -2,3 +2,5 @@
 *Tutorial*
 
 *.pyc
+
+.DS_store
