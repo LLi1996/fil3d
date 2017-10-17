@@ -65,6 +65,8 @@ def main():
                         help='directory of good masks')
     parser.add_argument('-p', '--pickle_file', default=None,
                         help='file path of the pickle')
+    parser.add_argument('-a', '--append_save_name', default=None,
+                        help='append to end of save name')
     parser.add_argument('-s', '--save_file', action='store_true',
                         help='save the result pickle')
     parser.add_argument('-v', '--verbose', action='store_true',
@@ -80,8 +82,12 @@ def main():
         print('\nWorking on {0}'.format(batch))
 
     good_mask_dir = args.good_mask_dir if args.good_mask_dir else DROPBOX_GOOD_MASKS.replace('BATCH', batch)
+    if good_mask_dir[-1] != '/':
+        good_mask_dir = good_mask_dir + '/'
     pickle_file = args.pickle_file if args.pickle_file else PICKLE_ALL_TREES.replace('BATCH', batch)
     pickle_save = PICKLE_CHOSEN.replace('BATCH', batch)
+    if args.append_save_name is not None:
+        pickle_save = pickle_save.replace('.p', '{0}.p'.format(args.append_save_name))
 
     good_masks_keys = parse_files_into_mask_names(good_mask_dir, verbose=args.verbose)
     good_trees_dict = get_good_masks_from_pickle(pickle_file, good_masks_keys, verbose=args.verbose)
