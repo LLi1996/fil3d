@@ -26,7 +26,7 @@ class MaskObjNode:
         self.mask = mask_obj
 
         # corners are [(bottomleft)[y,x],(topright)[y,x]]
-        # organize corners in to list of lists instead of list of tups and convert into [x,y]
+        # organize corners into list of lists instead of list of tups and convert into [x,y]
         self.corner_BL = [corners[0][1], corners[0][0]]
         self.corner_TR = [corners[1][1], corners[1][0]]
         self.corners = [self.corner_BL, self.corner_TR]
@@ -271,3 +271,11 @@ def check_node_b_cutoff(node, hdr, b_cutoff=30):
         return False
     else:
         return True
+
+
+def get_node_plot_corners(node):
+    """gets the x y plot corners for matplotlib
+    Arguments:
+        node {mask_node} -- node obj
+    """
+    return [node.corner_BL[0], node.corner_TR[0], node.corner_BL[1], node.corner_TR[1]]

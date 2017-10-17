@@ -92,3 +92,21 @@ def image_orientation(data, calculate_roundness=True, degrees=False):
         theta_2 = np.degrees(theta_2)
 
     return theta_1, theta_2, roundness
+
+
+def get_mask_orientation_info(mask):
+    x_bar, y_bar = image_centroid(mask)
+    theta_1, theta_2, roundness = image_orientation(mask)
+    return x_bar, y_bar, theta_1, theta_2, roundness
+
+
+def get_mask_node_orientation_info(mask_node):
+    x_bar, y_bar, theta_1, theta_2, roundness = get_mask_orientation_info(mask_node.mask)
+    x_bar = x_bar + mask_node.corner_BL[0]
+    y_bar = y_bar + mask_node.corner_BL[1]
+    return x_bar, y_bar, theta_1, theta_2, roundness
+
+
+def get_tree_mask_orientation_info(tree):
+    x_bar, y_bar, theta_1, theta_2, roundness = get_mask_node_orientation_info(tree.root_node)
+    return x_bar, y_bar, theta_1, theta_2, roundness
