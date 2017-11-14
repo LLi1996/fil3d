@@ -6,11 +6,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from cube_fil_finder.util import moments
 from cube_fil_finder.structs import mask_obj_node as maskNode
+from cube_fil_finder.galfa import galfa_const
 
 
 def vis_tree_shadow(tree, tree_name, save_fig=False, save_dir=None, save_name=None):
     '''
-
     Arguments:
         tree {[type]} -- [description]
         tree_name {[type]} -- [description]
@@ -104,3 +104,60 @@ def vis_mask_tree_moment(mask_tree, tree_name, save_fig=False, save_dir=None,
     root_mask_node = mask_tree.root_node
     vis_mask_node_moments(root_mask_node, tree_name, save_fig=save_fig,
                           save_dir=save_dir, save_name=save_name, figsize=figsize)
+    pass #WIP
+
+
+def vis_mask_sky_dist(mask_node, mask_name, save_fig=False, save_dir=None, save_name=None, verbose=False):
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+
+    ax.imshow([[], []], extent=[0, galfa_const.GALFA_X_STEPS, 0, galfa_const.GALFA_Y_STEPS], origin='lower')
+
+    this_mask = mask_node.mask
+    this_plot_corners = [mask_node.corner_BL[0], mask_node.corner_TR[0],
+                         mask_node.corner_BL[1], mask_node.corner_TR[1]]
+    ax.contour(this_mask, colors='r', extent=this_plot_corners)
+
+    ax.set_title('{0} Sky Position'.format(mask_name))
+
+    if verbose:
+        fig.show()
+
+    if save_fig:
+        fig.savefig(save_dir + save_name)
+
+    plt.clf()
+
+
+def vis_all_trees_sky_dist(trees, trees_name, save_fig=False, save_dir=None, save_name=None, verbose=False):
+    """Plots all the masks in the trees dict at their
+    Arguments:
+        trees {dict} -- of maskTrees
+        trees_name {str} -- of tree batch
+    Keyword Arguments:
+        save_fig {bool} -- [description] (default: {False})
+        save_dir {[type]} -- [description] (default: {None})
+        save_name {[type]} -- [description] (default: {None})
+        verbose {bool} -- [description] (default: {False})
+    """
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+
+    ax.imshow([[], []], extent=[0, galfa_const.GALFA_X_STEPS, 0, galfa_const.GALFA_Y_STEPS], origin='lower')
+
+    for key in trees:
+        this_node = trees[key]
+        this_mask = this_node.root_node.mask
+        this_plot_corners = [this_node.root_node.corner_BL[0], this_node.root_node.corner_TR[0],
+                             this_node.root_node.corner_BL[1], this_node.root_node.corner_TR[1]]
+        ax.contour(this_mask, colors='r', extent=this_plot_corners)
+
+    ax.set_title('{0} Sky Distribution'.format(trees_name))
+
+    if verbose:
+        fig.show()
+
+    if save_fig:
+        fig.savefig(save_dir + save_name)
+
+    plt.clf()

@@ -1,0 +1,8 @@
+"""
+GALFA constants
+
+LL2017
+"""
+
+GALFA_X_STEPS = 2432
+GALFA_Y_STEPS = 21600
