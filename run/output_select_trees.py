@@ -1,5 +1,5 @@
 """
-script to print the outline of select trees for further investigation
+script to print the masks of select trees for further investigation
 
 LL2017
 """
