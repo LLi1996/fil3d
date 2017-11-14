@@ -11,103 +11,107 @@ from cube_fil_finder.structs import mask_obj_node_tree as maskTree
 from cube_fil_finder.structs import util as struct_util
 
 
-def find_all_trees_from_slices(vs, dict_full_names, hdr, overlap_thresh=.85, reverse_find=False, verbose=False):
+def find_all_trees_from_slices(vs, dict_full_paths, hdr, overlap_thresh=.85, reverse_find=False, verbose=False):
     """
     find all the trees given a list of velocity and a list of dict names
     reverse find currently not implemented!
 
     Arguments:
-        vs {[type]} -- [description]
+        vs {list} -- of velocity slices
+        dict_full_paths {dict} -- of paths to the pickled node dictionaries
+        hdr {HDU} -- of a galfa slice
 
     Keyword Arguments:
         overlap_thresh {number} -- [description] (default: {.75})
         reverse_find {bool} -- [description] (default: {False})
         verbose {bool} -- [description] (default: {False})
     """
-    nodes_by_tree = {}
+    trees = {}
 
-    if len(vs) != len(dict_full_names):
-        print "\n\nLength of velocities and dictionaries don't match"
+    if len(vs) != len(dict_full_paths):
+        print("\n\nLength of velocities and dictionaries don't match")
         sys.exit()
 
-    for v in range(len(vs)):
-        dict_recover_path = dict_full_names[v]
-        nodes_in_v_slice = pickle.load(open(dict_recover_path, 'rb'))
+    # iterate through every velocity channel to match nodes
+    for i in xrange(len(vs)):
+        node_dict_path = dict_full_paths[i]
+        nodes_in_v_slice = pickle.load(open(node_dict_path, 'rb'))
 
         if verbose:
-            print "working on v slice %d" % vs[v]
+            print("working on v slice %d..." % vs[i])
 
-        if v == 0:
-            for j in struct_util.sorted_node_dict_keys(nodes_in_v_slice.keys()):
-                # create trees and match masks by descending size
-                if verbose:
-                    print "\ton mask {}".format(int(j.split('_')[0]))
+        # iterate through the nodes in descending order (by masked area)
+        for k in struct_util.sorted_struct_dict_keys_by_area(nodes_in_v_slice.keys(), key_type='node'):
+            current_node = nodes_in_v_slice[k]
 
-                current_node = nodes_in_v_slice[j]
-                if not maskNode.check_node_b_cutoff(current_node, hdr):
-                    if verbose:
-                        print "\t\tmask didn't make b cutoff"
-                    continue
+            if verbose:
+                print("\ton mask {}".format(k))
 
-                new_tree = maskTree.newTreeFromNode(current_node, verbose=verbose)
-                struct_util.add_tree_to_dict(new_tree, nodes_by_tree)
-        else:
-            for j in struct_util.sorted_node_dict_keys(nodes_in_v_slice.keys()):
-                # match masks by descending size onto existing trees
-                if verbose:
-                    print "\ton mask {}".format(j)
-
-                current_node = nodes_in_v_slice[j]
-                if not maskNode.check_node_b_cutoff(current_node, hdr):
-                    continue
-
-                if not match_node_onto_tree(current_node, nodes_by_tree, overlap_thresh, verbose=verbose):
+            # check for b cutoff
+            if not maskNode.check_node_b_cutoff(current_node, hdr):
+                # match and add node, if not matched, create new tree and add to dict of trees
+                if not match_and_add_node_onto_tree(current_node, trees, overlap_thresh, verbose=verbose):
                     new_tree = maskTree.newTreeFromNode(current_node, verbose=verbose)
-                    struct_util.add_tree_to_dict(new_tree, nodes_by_tree)
+                    struct_util.add_tree_to_dict(new_tree, trees)
+            else:
+                if verbose:
+                    print("\t\tdidn't make b cutoff")
+                continue
 
-            end_noncontinuous_trees(nodes_by_tree, vs[v])
-            delete_short_dead_trees(nodes_by_tree)
+        # keep the tree dict compact
+        end_noncontinuous_trees(trees, vs[i])
+        delete_short_dead_trees(trees)
 
         del nodes_in_v_slice
 
-    return nodes_by_tree
+    return trees
 
 
-def match_node_onto_tree(node, trees, overlap_thresh, verbose=False):
+def match_and_add_node_onto_tree(node, trees, overlap_thresh, verbose=False):
     """
-    matches a node onto an existing tree
+    matches a node to an existing tree in the set of trees
 
     Arguments:
-        node {[type]} -- [description]
-        tree {[type]} -- [description]
+        node {maskNode} -- node trying to be matched
+        trees {dict} -- of trees
+    Returns:
+        True -- if the node as been matched
     """
     has_matched = False
+    if verbose:
+        print("\t\tmatching...")
 
-    for k in sorted(trees.keys(), reverse=True):
-        # search the existing trees by descending size
-        if trees[k].has_ended:
-            continue
-        else:
-            if trees[k].getLastNode().checkMaskOverlap(node, overlap_thresh):
-                node.visited = True
-                has_matched = True
-                trees[k].addNode(node, verbose)
-                if verbose:
-                    print "\t\t matched with tree %s" % k
-                break
-            else:
+    if not trees:
+        print("\t\tno match found -- empty tree dict")
+        return has_matched
+    else:
+        # iterate through the trees in descending order to match node
+        for k in struct_util.sorted_struct_dict_keys_by_area(trees.keys(), key_type='tree'):
+            if trees[k].has_ended:
                 continue
+            else:
+                # match and add node, if not matched continue
+                if trees[k].getLastNode().checkMaskOverlap(node, overlap_thresh):
+                    node.visited = True
+                    has_matched = True
+                    trees[k].addNode(node, verbose)
+                    if verbose:
+                        print("\t\tmatch found -- tree %s" % k)
+                    return has_matched
+                else:
+                    continue
 
+    if verbose:
+        print("\t\tno match found -- searched through tree dict")
     return has_matched
 
 
 def end_noncontinuous_trees(trees, current_v):
     """
     ends the trees that have not matched in this velocity slice
-
     Arguments:
-        trees {[type]} -- [description]
-        current_v {[type]} -- [description]
+        trees {dict} -- of trees
+        current_v {int} -- the velocity slice that just finished matching
     """
     for i in sorted(trees.keys()):
         if trees[i].has_ended:
@@ -117,105 +121,24 @@ def end_noncontinuous_trees(trees, current_v):
                 trees[i].has_ended = True
 
 
-def find_all_trees_from_cube(nodes_by_v_slice, overlap_thresh=.75, reverse_find=False, verbose=False):
+def delete_short_dead_trees(trees, length_cutoff=1, verbose=False):
     """
-    find all the trees given the entire set of dicts which contain the entire
-    cube
+    delete all the trees that have length = 1 and have ended
+    Arguments:
+        tree_dict {dict} -- of trees
     """
-    nodes_by_tree = {}
+    bad_trees_keys = []
 
-    vs = sorted(nodes_by_v_slice.keys(), reverse=reverse_find)
-
-    for v in vs:
-        if v not in nodes_by_v_slice:
-            print "\n\nSOMETHING WENT WRONG"
-            sys.exit()
-
-        if verbose:
-            print "working on v slice %d" % v
-
-        for i in sorted(nodes_by_v_slice[v].keys(), reverse=True):
-            # create trees and match masks by descending size
-            if verbose:
-                print "\ton mask %d" % i
-
-            current_node = nodes_by_v_slice[v][i]
-
-            if current_node.visited == True:
-                if verbose:
-                    print "\tvisited"
-                continue
-            else:
-                new_full_tree = find_new_full_tree(current_node, nodes_by_v_slice, overlap_thresh, reverse=reverse_find)
-                nodes_by_tree[new_full_tree.getTreeMaskedArea2D()] = new_full_tree
-
-    return nodes_by_tree
-
-
-def find_new_full_tree(root_node, nodes_by_v_slice, overlap_thresh, reverse=False, verbose=False):
-    new_tree = maskTree.newTreeFromNode(root_node, verbose=verbose)
-    new_tree = find_all_children(new_tree, nodes_by_v_slice, overlap_thresh, reverse=reverse, verbose=verbose)
+    for k in trees:
+        if trees[k].has_ended and trees[k].length <= length_cutoff:
+            bad_trees_keys.append(k)
+            continue
 
     if verbose:
-        print new_tree.root_node.corners
+        print("\tdeleting %d trees that are small & dead" % len(bad_trees_keys))
 
-    return new_tree
-
-
-def find_all_children(tree, nodes_by_v_slice, overlap_thresh, reverse=False, verbose=False):
-    start_v = tree.root_v_slice
-
-    if reverse:
-        adv = -1
-    else:
-        adv = 1
-
-    v_slice = start_v + adv
-    while True:
-        if v_slice not in nodes_by_v_slice or len(nodes_by_v_slice[v_slice]) == 0:
-            tree.has_ended = True
-            break
-        else:
-            children_added = []
-            if verbose:
-                print "Corners of old nodes" + str(tree.getLastNode().corners)
-
-            for i in sorted(nodes_by_v_slice[v_slice].keys(), reverse=True):
-                # matches masks by big to small
-                this_node = nodes_by_v_slice[v_slice][i]
-                if this_node.visited == False:
-                    if tree.getLastNode().checkMaskOverlap(this_node, overlap_thresh):
-                        children_added.append(i)
-                        if verbose:
-                            print "Corners of matched children" + str(nodes_by_v_slice[v_slice][i].corners)
-
-            if verbose:
-                print "\t\t %d children found on slice %d" % (len(children_added), v_slice)
-
-            if len(children_added) == 1:
-                nodes_by_v_slice[v_slice][children_added[0]].visited = True
-                if verbose:
-                    print "\t\t\t %d - %d marked as visited" % (v_slice, children_added[0])
-                tree.addNode(nodes_by_v_slice[v_slice][children_added[0]])
-                v_slice += adv
-                continue
-            elif len(children_added) > 1:
-                first_node = nodes_by_v_slice[v_slice][children_added[0]]
-                first_node.visited = True
-                for j in children_added:
-                    if j != children_added[0]:
-                        first_node.mergeNode(nodes_by_v_slice[v_slice][j])
-                        nodes_by_v_slice[v_slice][j].visited = True
-                    if verbose:
-                        print "\t\t\t %d - %d marked as visited" % (v_slice, children_added[j])
-                tree.addNode(first_node)
-                v_slice += adv
-                continue
-            elif len(children_added) == 0:
-                tree.has_ended = True
-                break
-
-    return tree
+    for k in bad_trees_keys:
+        del trees[k]
 
 
 def prune_trees(all_trees, size_cut=30, length_cut=3, length_limit=36, verbose=False):
@@ -243,14 +166,14 @@ def prune_trees(all_trees, size_cut=30, length_cut=3, length_limit=36, verbose=F
     return pruned_trees
 
 
-def get_length_dist(all_trees):
+def get_velocity_span_dist(all_trees):
     """
-    return the lengths of all the trees
+    return the lengths of the trees in velocity space
     Arguments:
-        all_trees {[type]} -- [description]
+        all_trees {dict} -- of trees
 
     Returns:
-        [type] -- [description]
+        {np.array} -- of lengths in velocity space
     """
     length_dist = []
 
@@ -260,14 +183,14 @@ def get_length_dist(all_trees):
     return np.array(length_dist)
 
 
-def get_size_dist(all_trees):
+def get_mask_size_dist(all_trees):
     """
-    return the sizes of all the trees
+    return the sizes (mask) of all the trees
     Arguments:
-        all_trees {[type]} -- [description]
+        all_trees {dict} -- of trees
 
     Returns:
-        [type] -- [description]
+        {np.array} -- of sizes (pixels^2)
     """
     size_dist = []
 
@@ -277,15 +200,15 @@ def get_size_dist(all_trees):
     return np.array(size_dist)
 
 
-def get_ar_dist(all_trees):
+def get_mask_box_ar_dist(all_trees):
     """
-    return the aspect ratios of the all the trees (from rectangle mask)
+    return the aspect ratios of the all the boxes of the masks
 
     Arguments:
-        all_trees {[type]} -- [description]
+        all_trees {dict} -- of trees
 
     Returns:
-        [type] -- [description]
+        {np.array} -- of AR
     """
     ar_dist = []
 
@@ -293,24 +216,3 @@ def get_ar_dist(all_trees):
         ar_dist.append(all_trees[k].getTreeAspectRatio())
 
     return np.array(ar_dist)
-
-
-def delete_short_dead_trees(all_trees, length_cutoff=1, verbose=False):
-    """
-    delete all the trees that have length = 1 and have ended
-
-    Arguments:
-        tree_dict {[type]} -- [description]
-    """
-    bad_trees_keys = []
-
-    for k in all_trees:
-        if all_trees[k].has_ended and all_trees[k].length == length_cutoff:
-            bad_trees_keys.append(k)
-            continue
-
-    if verbose:
-        print "\t\t deleting %d trees that are small & dead" % len(bad_trees_keys)
-
-    for k in bad_trees_keys:
-        del all_trees[k]

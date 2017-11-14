@@ -98,13 +98,24 @@ def add_tree_to_dict(tree, dictionary):
     dictionary[key] = tree
 
 
-def sorted_node_dict_keys(node_dict_keys, descending=True):
-    """Sort the node dict keys by masked area size
+def sorted_struct_dict_keys_by_area(dict_keys, key_type, descending=True):
+    """Sort struct dict keys by masked area size
     Arguments:
-        tree_dict_keys {list} -- of hashed node keys
+        dict_keys {list} -- of hashed struct keys
+        key_type {str} -- either 'node' or 'tree'
     Keyword Arguments:
         descending {bool} -- if reverse sort (default {True})
+    Return
+        {list} -- of keys sorted
     """
-    mapped_keys = map(lambda k: (k, node_key_unhash(k)[0]), node_dict_keys)
+    # map keys into (key, size of mask)s
+    if key_type.lower() == 'node':
+        mapped_keys = map(lambda k: (k, node_key_unhash(k)[0]), dict_keys)
+    elif key_type.lower() == 'tree':
+        mapped_keys = map(lambda k: (k, tree_key_unhash(k)[0]), dict_keys)
+    else:
+        return []
+    # sort (key, size of mask)s by size of mask
     sorted_mapped_keys = sorted(mapped_keys, key=lambda x: x[1], reverse=descending)
-    return map(lambda (k, v): k, sorted_mapped_keys)
+    # map (key, size of mask) back to keys
+    return map(lambda (k, size): k, sorted_mapped_keys)
