@@ -179,7 +179,7 @@ class MaskObjNode:
         Returns:
             int -- # of pixels masked (as opposed to the area of the mask)
         """
-        if mask == None:
+        if mask is None:
             mask = self.mask
 
         return np.size(np.where(mask == True)[0])
@@ -213,7 +213,7 @@ class MaskObjNode:
         Returns:
             int -- the area of the mask (in pixels^2)
         """
-        if corners == None:
+        if corners is None:
             corners = self.corners
 
         return (corners[1][0] - corners[0][0]) * (corners[1][1] - corners[0][1])
