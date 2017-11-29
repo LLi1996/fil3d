@@ -9,6 +9,7 @@ import numpy as np
 from cube_fil_finder.structs import mask_obj_node as maskNode
 from cube_fil_finder.structs import mask_obj_node_tree as maskTree
 from cube_fil_finder.structs import util as struct_util
+from cube_fil_finder.util import moments
 
 
 def find_all_trees_from_slices(vs, dict_full_paths, hdr, overlap_thresh=.85, reverse_find=False, verbose=False):
@@ -60,7 +61,7 @@ def find_all_trees_from_slices(vs, dict_full_paths, hdr, overlap_thresh=.85, rev
 
         # keep the tree dict compact
         end_noncontinuous_trees(trees, vs[i])
-        delete_short_dead_trees(trees)
+        delete_short_dead_trees(trees, verbose=verbose)
 
         del nodes_in_v_slice
 
@@ -203,10 +204,8 @@ def get_mask_size_dist(all_trees):
 def get_mask_box_ar_dist(all_trees):
     """
     return the aspect ratios of the all the boxes of the masks
-
     Arguments:
         all_trees {dict} -- of trees
-
     Returns:
         {np.array} -- of AR
     """
@@ -216,3 +215,18 @@ def get_mask_box_ar_dist(all_trees):
         ar_dist.append(all_trees[k].getTreeAspectRatio())
 
     return np.array(ar_dist)
+
+
+def get_mask_roundness_dist(trees):
+    """
+    return the roudnesses of all the masks of the trees
+    Arguments:
+        trees {dict} -- of trees
+    Returns:
+        {np.array} -- of roundness
+    """
+    roundness = []
+    for k in trees:
+        roundness.append(moments.get_tree_mask_orientation_info(trees[k])[4])
+    return np.array(roundness)
+
