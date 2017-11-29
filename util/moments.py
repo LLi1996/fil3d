@@ -8,6 +8,14 @@ LL2017
 import numpy as np
 import math
 
+ROUNDNESS_AR_CONVERSION = {
+    '1_2': 0.24999924999925,
+    '1_4': 0.062499062499062501,
+    '1_6': 0.027555027555027554,
+    '1_8': 0.015624015624015624,
+    '1_16': 0.0039680039680039681
+}
+
 
 def image_moment(data, i_order, j_order, i_bar=None, j_bar=None):
     """Finds the i_th, j_th image moment
@@ -95,18 +103,39 @@ def image_orientation(data, calculate_roundness=True, degrees=False):
 
 
 def get_mask_orientation_info(mask):
+    """
+    orientation info for a mask
+    Arguments:
+        mask {2D np.array} -- mask
+    Returns:
+        x_bar, y_bar, theta_1, theta_2, roundness
+    """
     x_bar, y_bar = image_centroid(mask)
     theta_1, theta_2, roundness = image_orientation(mask)
     return x_bar, y_bar, theta_1, theta_2, roundness
 
 
-def get_mask_node_orientation_info(mask_node):
-    x_bar, y_bar, theta_1, theta_2, roundness = get_mask_orientation_info(mask_node.mask)
-    x_bar = x_bar + mask_node.corner_BL[0]
-    y_bar = y_bar + mask_node.corner_BL[1]
+def get_node_mask_orientation_info(node):
+    """
+    orientation info for a node
+    Arguments:
+        node {maskNode} -- node
+    Returns:
+        x_bar, y_bar, theta_1, theta_2, roundness
+    """
+    x_bar, y_bar, theta_1, theta_2, roundness = get_mask_orientation_info(node.mask)
+    x_bar = x_bar + node.corner_BL[0]
+    y_bar = y_bar + node.corner_BL[1]
     return x_bar, y_bar, theta_1, theta_2, roundness
 
 
 def get_tree_mask_orientation_info(tree):
-    x_bar, y_bar, theta_1, theta_2, roundness = get_mask_node_orientation_info(tree.root_node)
+    """
+    orientation info for a tree
+    Arguments:
+        tree {maskTree} -- tree
+    Returns:
+        x_bar, y_bar, theta_1, theta_2, roundness
+    """
+    x_bar, y_bar, theta_1, theta_2, roundness = get_node_mask_orientation_info(tree.root_node)
     return x_bar, y_bar, theta_1, theta_2, roundness
