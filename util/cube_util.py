@@ -9,6 +9,7 @@ from astropy.io import fits
 import math
 import numpy as np
 import scipy.ndimage
+from cube_fil_finder.galfa import galfa_const
 
 
 def circ_kern(diameter):
@@ -109,6 +110,21 @@ def radecs_to_lb(ras, decs):
     bs = obj.b.degree
 
     return ls, bs
+
+
+def galfa_index_to_lb(xs, ys, verbose=False):
+    """gets ls & bs assuming galfa standard indexing
+    Arguments:
+        xs {list/np.array} -- of indexes
+        ys {list/np.array} -- of indexes
+    Keyword Arguments:
+        verbose {bool} -- (default: {False})
+    Returns:
+        ls, bs {np.array} -- of ls bs
+    """
+    hdr = galfa_const.MOCK_GALFA_HDR
+    ras, decs = index_to_radec(xs, ys, hdr, verbose=verbose)
+    return radecs_to_lb(ras, decs)
 
 
 def mask_lb(data, hdr, b_cutoff=30, toNaN=False, l_cutoff=None):
