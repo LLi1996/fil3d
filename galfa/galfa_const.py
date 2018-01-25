@@ -4,8 +4,8 @@ GALFA constants
 LL2017
 """
 
-GALFA_X_STEPS = 2432
-GALFA_Y_STEPS = 21600
+GALFA_Y_STEPS = 2432
+GALFA_X_STEPS = 21600
 
 GALFA_SELECT_V_SLICES_RANGE = [955, 1092]
 
@@ -19,3 +19,5 @@ MOCK_GALFA_HDR = {
     'CDELT2': 0.0166667,
     'CRVAL2': 2.35000
 }
+
+GALFA_BACKUP_DATA_DIR = '/Volumes/LarryExternal1/Research_2017/GALFA_slices_backup/umask_gaussian_30/'
