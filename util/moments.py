@@ -139,3 +139,20 @@ def get_tree_mask_orientation_info(tree):
     """
     x_bar, y_bar, theta_1, theta_2, roundness = get_node_mask_orientation_info(tree.root_node)
     return x_bar, y_bar, theta_1, theta_2, roundness
+
+
+def get_node_mask_centroid(node):
+    """ warapper for getting mask centroid from a node
+    """
+    x_bar, y_bar = image_centroid(node.mask)
+    return x_bar, y_bar
+
+
+def get_tree_mask_centroid(tree):
+    """image centroid for a tree, used in tree -> l&b conversion
+    Arguments:
+        tree {maskTree} -- tree
+    Return:
+        x_bar, y_bar
+    """
+    return get_node_mask_centroid(tree.root_node)
