@@ -9,7 +9,6 @@ from astropy.io import fits
 import math
 import numpy as np
 import scipy.ndimage
-from cube_fil_finder.galfa import galfa_const
 
 
 def circ_kern(diameter):
@@ -70,29 +69,25 @@ def umask(data, radius=15, filter_opt='tophat', smr_mask=None):
         return np.logical_and(smr_mask, fin_out_data)
 
 
-def index_to_radec(xs, ys, hdr, verbose=True):
-    """
-    turns arrays of indecies to ra, dec based on header
-
+def create_0th_moment_map(slices_list):
+    """create integrated intensity from list of 2d np.arrays by simple sum
     Arguments:
-        xs {[type]} -- [description]
-        ys {[type]} -- [description]
-        hdr {[type]} -- [description]
+        slices_list {list} -- of 2d np.arrays
+    Return:
+        moment_map {2d np.array}
     """
+    moment_map = np.zeros_like(slices_list[0])
+    for s in slices_list:
+        moment_map = np.add(moment_map, s)
+    return moment_map
 
-    if type(xs) != np.ndarray:
-        xs = np.array(xs)
-    if type(ys) != np.ndarray:
-        ys = np.array(ys)
 
-    if xs.size != ys.size:
-        if verbose:
-            print "\t x & y array sizes different in conversion to RA-DEC"
-
-    ras = (xs - hdr['CRPIX1']) * hdr['CDELT1'] + hdr['CRVAL1']
-    decs = (ys - hdr['CRPIX2']) * hdr['CDELT2'] + hdr['CRVAL2']
-    # ^redundant but the right way?
-    return ras, decs
+def index_to_radec(xs, ys, hdr, verbose=True):
+    """DEPRECATED -- use galfa_util.galfa_index_to_radecs instead
+    """
+    from cube_fil_finder.galfa import galfa_util
+    print('DEPRECATED -- use galfa_util.galfa_index_to_radecs instead')
+    return galfa_util.galfa_index_to_radecs(xs, ys, hdr, verbose=verbose)
 
 
 def radecs_to_lb(ras, decs):
@@ -112,19 +107,34 @@ def radecs_to_lb(ras, decs):
     return ls, bs
 
 
-def galfa_index_to_lb(xs, ys, verbose=False):
-    """gets ls & bs assuming galfa standard indexing
-    Arguments:
-        xs {list/np.array} -- of indexes
-        ys {list/np.array} -- of indexes
-    Keyword Arguments:
-        verbose {bool} -- (default: {False})
-    Returns:
-        ls, bs {np.array} -- of ls bs
+def lbs_to_radecs(ls, bs, remin=False):
     """
-    hdr = galfa_const.MOCK_GALFA_HDR
-    ras, decs = index_to_radec(xs, ys, hdr, verbose=verbose)
-    return radecs_to_lb(ras, decs)
+    Transformation between lists of ls, bs, to ras, decs. Assumes all in degrees
+    Conforms to astropy 0.4.3
+    taken from https://github.com/seclark/FITSHandling/commit/f04a6e54c6624741e4f3077ba8ba96af620871ac
+    """
+    assert len(ls) == len(bs)
+    obj = coord(ls, bs, unit="deg", frame="galactic")
+    obj = obj.icrs
+
+    ras = obj.ra.degree
+    decs = obj.dec.degree
+
+    if remin:
+        ra_min = np.argmin(ras)
+        ras = np.hstack((ras[ra_min:], ras[:ra_min]))
+        decs = np.hstack((decs[ra_min:], decs[:ra_min]))
+        return ras, decs
+
+    return ras, decs
+
+
+def galfa_index_to_lb(xs, ys, verbose=False):
+    """DEPRECATED -- use galfa_util.galfa_index_to_lb instead
+    """
+    import cube_fil_finder.galfa.galfa_util as galfa_util
+    print('DEPRECATED -- use galfa_util.galfa_index_to_lb instead')
+    return galfa_util.galfa_index_to_lb(xs, ys, verbose=verbose)
 
 
 def mask_lb(data, hdr, b_cutoff=30, toNaN=False, l_cutoff=None):

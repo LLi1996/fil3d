@@ -229,4 +229,3 @@ def get_mask_roundness_dist(trees):
     for k in trees:
         roundness.append(moments.get_tree_mask_orientation_info(trees[k])[4])
     return np.array(roundness)
-
