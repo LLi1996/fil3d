@@ -69,19 +69,6 @@ def umask(data, radius=15, filter_opt='tophat', smr_mask=None):
         return np.logical_and(smr_mask, fin_out_data)
 
 
-def create_0th_moment_map(slices_list):
-    """create integrated intensity from list of 2d np.arrays by simple sum
-    Arguments:
-        slices_list {list} -- of 2d np.arrays
-    Return:
-        moment_map {2d np.array}
-    """
-    moment_map = np.zeros_like(slices_list[0])
-    for s in slices_list:
-        moment_map = np.add(moment_map, s)
-    return moment_map
-
-
 def index_to_radec(xs, ys, hdr, verbose=True):
     """DEPRECATED -- use galfa_util.galfa_index_to_radecs instead
     """
