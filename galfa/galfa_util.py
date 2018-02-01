@@ -10,16 +10,8 @@ from cube_fil_finder.galfa import galfa_v_lookup
 from cube_fil_finder.util import cube_util
 import numpy as np
 
-'''
-    this_structure_cube = []
-    for f in slice_files_list:
-        full_slice, hdr = fits.getdata(f, header=True)
-        corners = this_node.root_node.corners
-        structure_slice = full_slice[corners[0][1]:corners[1][1], corners[0][0]:corners[1][0]]
-        this_structure_cube.append(structure_slice)
 
-    this_moment_map = create_0th_moment_map(this_structure_cube)
-'''
+DATA_SLICE_BASE_DIR = '/Volumes/LarryExternal1/Research_2017/GALFA_slices_backup/umask_gaussian_30/'
 
 
 def get_galfa_slice_paths_from_tree(tree, data_dir=None):
@@ -29,7 +21,7 @@ def get_galfa_slice_paths_from_tree(tree, data_dir=None):
     Keyword Arguments:
         data_dir {str} -- of galfa slices (default: {None})
     Return:
-        slice_paths_list {list} -- of paths to slices
+        slice_paths_list {list} -- of paths to slices (sorted)
     """
     slice_paths_list = []
     length = tree.length
@@ -44,26 +36,40 @@ def get_galfa_slice_paths_from_tree(tree, data_dir=None):
         slice_path = glob.glob(slice_base_dir + '*{0}*'.format(str(starting_slice_index + i)))[0]
         slice_paths_list.append(slice_path)
 
+    slice_paths_list.sort()
+
     return slice_paths_list
 
 
-def get_cut_cube_from_galfa_slice_paths(slice_paths_list, node=None):
+def get_cut_cube_from_galfa_slice_paths(slice_paths_list, tree=None):
     """gets a cut data cube specifed by the dimention of the node and length of
     the slice_path_list
     Arguments:
         slice_paths_list {list} -- of full paths to galfa data slices
     Keyword Arguments:
-        node {maskNode} -- we use the corners to cut the slices (default: {None})
+        tree {maskTree} -- we use the corners to cut the slices (default: {None})
     """
     this_structure_cube = []
     for f in slice_paths_list:
         full_slice, hdr = fits.getdata(f, header=True)
         # probably should check some header info here
-        if node is None:
+        if tree is None:
             this_structure_cube.append(full_slice)
         else:
-            this_structure_cube.append(cut_galfa_slice_from_node(full_slice, node))
-    #WIP
+            this_structure_cube.append(cut_galfa_slice_from_tree(full_slice, tree))
+
+    return np.asarray(this_structure_cube)
+
+
+def cut_galfa_slice_from_tree(data_slice, tree):
+    """cut out from a data slice the data indicated inside the tree mask box
+    Arguments:
+        data_slice {2d np.array} -- of data, shape(m, n) "y-x"
+        tree {maskTree} -- containing nodes with masks
+    Returns:
+        cut_data_slice {2d np.array}
+    """
+    return cut_galfa_slice_from_node(data_slice, tree.root_node)
 
 
 def cut_galfa_slice_from_node(data_slice, node):
@@ -89,6 +95,18 @@ def cut_galfa_slice_from_corners(data_slice, corners):
     return cut_data_slice
 
 
+def get_galfa_data_cube_from_tree(tree):
+    """ cut out a data cube from galfa data from given tree spec
+    Arguments:
+        tree {maskTree} -- tree
+    Returns:
+        3d np.array -- v,y,x
+    """
+    data_slice_paths = get_galfa_slice_paths_from_tree(tree, data_dir=DATA_SLICE_BASE_DIR)
+    data_cube = get_cut_cube_from_galfa_slice_paths(data_slice_paths, tree)
+    return data_cube
+
+
 def galfa_index_to_lb(xs, ys, verbose=False):
     """gets ls & bs assuming galfa standard indexing
     Arguments:
@@ -100,7 +118,7 @@ def galfa_index_to_lb(xs, ys, verbose=False):
         ls, bs {np.array} -- of ls bs
     """
     hdr = galfa_const.MOCK_GALFA_HDR
-    ras, decs = galfa_index_to_radecs(xs, ys, hdr, verbose=verbose)
+    ras, decs = galfa_index_to_radecs(xs, ys, verbose=verbose)
     return cube_util.radecs_to_lb(ras, decs)
 
 
@@ -114,10 +132,10 @@ def lbs_to_galfa_index(ls, bs, remin=False, verbose=False):
     """
     hdr = galfa_const.MOCK_GALFA_HDR
     ras, decs = cube_util.lbs_to_radecs(ls, bs, remin=remin)
-    return radec_to_galfa_index(ras, decs, hdr, verbose=verbose)
+    return radec_to_galfa_index(ras, decs, verbose=verbose)
 
 
-def galfa_index_to_radecs(xs, ys, hdr, verbose=True):
+def galfa_index_to_radecs(xs, ys, verbose=True):
     """
     turns arrays of indecies to ra, dec based on header
 
@@ -126,6 +144,7 @@ def galfa_index_to_radecs(xs, ys, hdr, verbose=True):
         ys {[type]} -- [description]
         hdr {[type]} -- [description]
     """
+    hdr = galfa_const.MOCK_GALFA_HDR
 
     if type(xs) != np.ndarray:
         xs = np.array(xs)
@@ -142,7 +161,7 @@ def galfa_index_to_radecs(xs, ys, hdr, verbose=True):
     return ras, decs
 
 
-def radec_to_galfa_index(ras, decs, hdr, verbose=True):
+def radec_to_galfa_index(ras, decs, verbose=True):
     """
     turns arrays of ra, dec into indecies based on header
 
@@ -151,6 +170,7 @@ def radec_to_galfa_index(ras, decs, hdr, verbose=True):
         decs {[type]} -- [description]
         hdr {[type]} -- [description]
     """
+    hdr = galfa_const.MOCK_GALFA_HDR
 
     if type(ras) != np.ndarray:
         ras = np.array(ras)
@@ -175,6 +195,6 @@ def galfa_v_lookup_from_index(index, wide=True):
     if wide:
         galfa_v_lookup_list = galfa_v_lookup.GALFA_V_LOOKUP_W
     else:
-        # for narrow v channels
+        # for narrow v channels -- don't have them yet
         galfa_v_lookup_list = []
     return (galfa_v_lookup_list[int(np.floor(index))] + galfa_v_lookup_list[int(np.ceil(index))]) / 2.
