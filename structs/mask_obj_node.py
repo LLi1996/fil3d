@@ -25,11 +25,12 @@ class MaskObjNode:
 
         self.mask = mask_obj
 
-        # corners are [(bottomleft)[y,x],(topright)[y,x]]
+        # corners are [(bottomleft)[i,j],(topright)[i,j]]
         # organize corners into list of lists instead of list of tups and convert into [x,y]
         self.corner_BL = [corners[0][1], corners[0][0]]
         self.corner_TR = [corners[1][1], corners[1][0]]
         self.corners = [self.corner_BL, self.corner_TR]
+        self.corners_original = corners
 
         self.v_slice_index = [v_slice_index]
 

@@ -4,12 +4,14 @@ This takes in a GALFA cube and processes it into a dict of dict of masks
 
 # imports
 from astropy.io import fits
+from astropy import units as u
 from cube_fil_finder.structs import util as struct_util
 from cube_fil_finder.util import cube_util
-import filfind_class as filfind
+from fil_finder import FilFinder2D
 import glob
 import mask_obj_node as maskNode
 import pickle
+import numpy as np
 
 
 def preprocess_cube_filfind_struct(file_dir, file_name, v_range, x_range, y_range,
@@ -76,10 +78,10 @@ def preprocess_cube_filfind_struct(file_dir, file_name, v_range, x_range, y_rang
 
 
 def preprocess_singleslice_filfind_struct(file_dir, file_name, slice_v_index, x_range, y_range,
-                                          umask=False, umask_radius=None, umask_filter='tophat',
+                                          umask=False, umask_radius=None, umask_filter=None,
                                           save_struct=False, verbose_process=False, verbose=True):
     '''
-    Take a single GALFA data slice file, sharp mask it if necessary and then
+    Take a single GALFA data slice file, unsharp mask it if necessary and then
     cut it to the specified dimentions,
     and processes it to find strucutres with filfind.
     Each mask found by filfind is put into a dict with its masked_area_size as
@@ -91,9 +93,7 @@ def preprocess_singleslice_filfind_struct(file_dir, file_name, slice_v_index, x_
     full_slice, hdr = fits.getdata(file_dir + file_name, header=True)
 
     # full slice dimentions
-    full_slice_shape = full_slice.shape
-    full_y_pixel_count = full_slice_shape[0]
-    full_x_pixel_count = full_slice_shape[1]
+    full_y_pixel_count, full_x_pixel_count = full_slice.shape
 
     if verbose:
         print "\tThe full image is %d by %d pixels" % (full_x_pixel_count, full_y_pixel_count)
@@ -114,12 +114,14 @@ def preprocess_singleslice_filfind_struct(file_dir, file_name, slice_v_index, x_
 
     if len(nodes_in_slice) == 0:
         print "\n\tNO objects in slice %d" % slice_v_index
+    else:
+        print('\n\t{0} objects found in slice {1}'.format(len(nodes_in_slice, slice_v_index)))
 
     del full_slice
 
     # exit options
     if save_struct:
-        save_dir = 'pickled_dicts/'
+        save_dir = '../../pickled_dicts/'
         save_name = file_name.rsplit('.', 1)[0] + '[' + str(slice_v_index) + ']' + str(x_range) + str(y_range) + '.p'
         save_path = save_dir + save_name
 
@@ -133,57 +135,6 @@ def preprocess_singleslice_filfind_struct(file_dir, file_name, slice_v_index, x_
         return nodes_in_slice
 
 
-def preprocess_multislice_filfind_struct(file_dir, slice_common_name, v_index_range, x_range, y_range,
-                                         umask=False, save_struct=True, verbose_process=False, verbose=True):
-    '''
-    Takes multiple GALFA data slice files. Usharp mask them if necessary, and
-    runs filfind on the them.
-    Each mask found by filfind on a single v slice is put into a dict with its
-    masked_area_size as key and each dict is then put into a dict with its v
-    index as key.
-
-    The overall structure is either returned or pickled.
-    '''
-    file_name = file_dir + slice_common_name
-
-    nodes_by_v_slice = {}
-    for v in xrange(v_index_range[0], v_index_range[1]):
-        if verbose:
-            print "\t current v index is " + str(v)
-
-        if v // 100 < 10:
-            glob_file_name = file_name + '0' + str(v) + '*'
-        else:
-            glob_file_name = file_name + str(v) + '*'
-
-        if verbose:
-            print "\t searching for: " + glob_file_name
-
-        true_file_name = glob.glob(glob_file_name)[0].rsplit('/', 1)[-1]
-        full_slice, hdr = fits.getdata(true_file_name, header=True)
-
-        nodes_in_slice = preprocess_singleslice_filfind_struct(file_dir, true_file_name,
-                                                               v, x_range, y_range, umask=True)
-
-        # put dict of mask_obj_nodes into a dict with v as key
-        nodes_by_v_slice[v] = nodes_in_slice
-
-    # exit options
-    if save_struct:
-        save_dir = 'pickled_dicts/'
-        save_name = true_file_name.rsplit('.', 1)[0] + str(v_index_range) + str(x_range) + str(y_range) + '.p'
-        save_path = save_dir + save_name
-
-        if verbose:
-            print "saving struct at " + save_path
-
-        pickle.dump(nodes_by_v_slice, open(save_path, 'wb'))
-        return save_path
-
-    else:
-        return nodes_by_v_slice
-
-
 def process_dataslice_filfind_struct(data, hdr, slice_v_index, verbose_process=False):
     '''
     Takes a single 2D data slice and runs filfind on it. Filfind will return the
@@ -192,21 +143,19 @@ def process_dataslice_filfind_struct(data, hdr, slice_v_index, verbose_process=F
 
     Returns the dict
     '''
-    assert data.ndim == 2
-    # puts slice into filfind
-    fils = filfind.fil_finder_2D(data, header=hdr, beamwidth=10.0, glob_thresh=20,
-                                 distance=100, flatten_thresh=95, standard_width=.5,
-                                 size_thresh=600)
-    # note size_thresh, adapt_thresh, smooth_size, fill_hole_size can all be set by args
-    mask_objs = fils.create_mask(verbose=verbose_process, regrid=False, border_masking=True,
-                                 save_png=True, run_name=str(slice_v_index), output_mask_objs=True,
-                                 test_mode=verbose_process)
+    hdr['BUNIT'] = 'k'  # as opposed to 'k (tb)' which isn't recognized by astropy.units
+    fils = FilFinder2D(data, header=hdr, distance=100. * u.pc, beamwidth=10. * u.arcmin)
+    fils.preprocess_image(flatten_percent=95)
+    standard_width = 0.2 * u.pc  # from experments
+    mask_objs, corners = fils.create_mask(smooth_size=standard_width / 2,
+                                          adapt_thresh=standard_width * 2,
+                                          size_thresh=standard_width ** 2 * 4 * np.pi,
+                                          border_masking=False, output_mask_objs=True)
 
     # put returned masks in a dict of mask_obj_nodes
     nodes_in_dataslice = {}
-    if mask_objs[0] != 0:
-        for i in range(0, len(mask_objs[0])):
-            this_mask_node = maskNode.MaskObjNode(mask_objs[0][i], mask_objs[1][i], slice_v_index)
-            struct_util.add_node_to_dict(this_mask_node, nodes_in_dataslice)
+    for i in range(len(mask_objs)):
+        this_mask_node = maskNode.MaskObjNode(mask_objs[i], mask_objs[i], slice_v_index)
+        struct_util.add_node_to_dict(this_mask_node, nodes_in_dataslice)
 
     return nodes_in_dataslice
