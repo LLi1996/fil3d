@@ -1,3 +1,4 @@
+import copy
 import numpy as np
 
 
@@ -13,7 +14,7 @@ class MaskObjNodeTree:
     """
 
     def __init__(self, node_obj):
-        self.root_node = node_obj
+        self.root_node = copy.deepcopy(node_obj)
         self.root_v_slice = node_obj.v_slice_index[0]
 
         self.node_list = [node_obj]
@@ -21,7 +22,7 @@ class MaskObjNodeTree:
 
         self.has_ended = False
 
-    def addNode(self, new_node, verbose=False):
+    def addNode(self, new_node, new_channel=True, verbose=False):
         if verbose:
             print "Adding node to root"
             print "Old corners: " + str(self.root_node.corners)
@@ -29,7 +30,12 @@ class MaskObjNodeTree:
 
         self.root_node.mergeNode(new_node)
         self.node_list.append(new_node)
-        self.length += 1
+        if new_channel:
+            self.length += 1
+
+        if hasattr(self.root_node, 'corners_original'):
+            self.root_node.corners_original = [[self.root_node.corner_BL[1], self.root_node.corner_BL[0]],
+                                               [self.root_node.corner_TR[1], self.root_node.corner_TR[0]]]
 
         if verbose:
             print "New corners: " + str(self.root_node.corners)

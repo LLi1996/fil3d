@@ -28,10 +28,6 @@ def main():
 
     pickle_common_name = galfa_const.GALFA_SLICE_COMMON_NAME
 
-    # get sample header for tree finding algorithm
-    sample_slice_full_name = '/Volumes/LarryExternal1/Research_2017/GALFA_slices_backup/umask_gaussian_30/GALFA_HI_W_S0955_V-050.4kms_umask.fits'
-    sample_hdr = fits.getheader(sample_slice_full_name)
-
     # find the full dictionary paths
     vs = range(starting_v, ending_v + 1)
     node_dict_full_paths = []
@@ -43,16 +39,19 @@ def main():
             glob_pickle_name = pickle_name + str(v) + '*'
 
         if args.verbose:
-            print "\t searching for: {0}".format(glob_pickle_name)
+            print("\t searching for: {0}".format(glob_pickle_name))
         true_pickle_name = glob.glob(glob_pickle_name)[0]
         node_dict_full_paths.append(true_pickle_name)
         if args.verbose:
-            print "\t found: {0}".format(true_pickle_name)
+            print("\t found: {0}".format(true_pickle_name))
 
     # run tree finding algorithm
-    all_trees = tree_dict_util.find_all_trees_from_slices(vs, node_dict_full_paths, sample_hdr, verbose=args.verbose)
+    all_trees = tree_dict_util.find_all_trees_from_slices(vs, node_dict_full_paths, verbose=args.verbose)
 
-    save_dir = 'pickled_dicts/third_batch'
+    tree_dict_util.end_noncontinuous_trees(all_trees, galfa_const.GALFA_SELECT_V_SLICES_RANGE[1] + 1)
+    tree_dict_util.delete_short_dead_trees(all_trees, verbose=args.verbose)
+
+    save_dir = '../../pickled_dicts/width_comp_low_1/'
     save_name = 'all_trees.p'
     save_path = save_dir + save_name
 

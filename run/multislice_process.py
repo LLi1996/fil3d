@@ -5,12 +5,11 @@ import argparse
 import glob
 from cube_fil_finder.galfa import preprocess_cube
 from cube_fil_finder.galfa import galfa_const
+import datetime
 
 SLICE_COMMON_NAME = 'GALFA_HI_W_S'
 
 V_INDEX_RANGE = galfa_const.GALFA_SELECT_V_SLICES_RANGE
-X_INDEX_RANGE = [0, galfa_const.GALFA_X_STEPS]
-Y_INDEX_RANGE = [0, galfa_const.GALFA_Y_STEPS]
 
 
 def main():
@@ -23,6 +22,14 @@ def main():
                         help="starting v slice")
     parser.add_argument('-e', '--end', default=V_INDEX_RANGE[1], type=int,
                         help="ending v slice")
+    parser.add_argument('-xs', '--x_start', default=0, type=int,
+                        help="starting x pix")
+    parser.add_argument('-xe', '--x_end', default=galfa_const.GALFA_X_STEPS, type=int,
+                        help="starting x pix")
+    parser.add_argument('-ys', '--y_start', default=0, type=int,
+                        help="starting x pix")
+    parser.add_argument('-ye', '--y_end', default=galfa_const.GALFA_Y_STEPS, type=int,
+                        help="starting x pix")
     parser.add_argument('-f', '--filter', default='gaussian',
                         help="filter type for umask")
     parser.add_argument('-r', '--radius', default=30, type=int,
@@ -35,13 +42,17 @@ def main():
 
     if file_dir[-1] != '/':
         file_dir += '/'
+    print(args)
+
+    X_INDEX_RANGE = [args.x_start, args.x_end]
+    Y_INDEX_RANGE = [args.y_start, args.y_end]
 
     print('Starting multislice process')
 
     file_name = file_dir + SLICE_COMMON_NAME
 
     for v in xrange(args.start, args.end + 1):
-        print('\ton slice {0}'.format(v))
+        print('\ton slice {0}, {1}'.format(v, datetime.datetime.now()))
 
         if v // 100 < 10:
             glob_file_name = file_name + '0' + str(v) + '*'

@@ -1,5 +1,6 @@
 import numpy as np
 from cube_fil_finder.util import cube_util
+from cube_fil_finder.galfa import galfa_const
 
 
 class MaskObjNode:
@@ -24,8 +25,9 @@ class MaskObjNode:
         """
 
         self.mask = mask_obj
+        corners = fix_boarder_corners(corners)
 
-        # corners are [(bottomleft)[i,j],(topright)[i,j]]
+        # corners are [(topleft)[i,j],(bottom right)[i,j]]
         # organize corners into list of lists instead of list of tups and convert into [x,y]
         self.corner_BL = [corners[0][1], corners[0][0]]
         self.corner_TR = [corners[1][1], corners[1][0]]
@@ -195,14 +197,23 @@ class MaskObjNode:
             new expanded mask
         """
         mask = self.mask
-        old_corners = self.corners
 
-        t_Pad = abs(new_corners[1][1] - old_corners[1][1])
-        b_Pad = abs(new_corners[0][1] - old_corners[0][1])
-        l_Pad = abs(new_corners[0][0] - old_corners[0][0])
-        r_Pad = abs(new_corners[1][0] - old_corners[1][0])
-
-        return np.lib.pad(mask, ((b_Pad, t_Pad), (l_Pad, r_Pad)), 'constant', constant_values=0)
+        if hasattr(self, 'corners_original'):  # clearer np indexing
+            np_corners = self.corners_original
+            np_corners_new = [(new_corners[0][1], new_corners[0][0]),
+                              (new_corners[1][1], new_corners[1][0])]
+            i_pad_before = np_corners[0][0] - np_corners_new[0][0]
+            i_pad_after = np_corners_new[1][0] - np_corners[1][0]
+            j_pad_before = np_corners[0][1] - np_corners_new[0][1]
+            j_pad_after = np_corners_new[1][1] - np_corners[1][1]
+            return np.pad(mask, ((i_pad_before, i_pad_after), (j_pad_before, j_pad_after)), 'constant', constant_values=0)
+        else:
+            old_corners = self.corners
+            t_Pad = abs(new_corners[1][1] - old_corners[1][1])
+            b_Pad = abs(new_corners[0][1] - old_corners[0][1])
+            l_Pad = abs(new_corners[0][0] - old_corners[0][0])
+            r_Pad = abs(new_corners[1][0] - old_corners[1][0])
+            return np.lib.pad(mask, ((b_Pad, t_Pad), (l_Pad, r_Pad)), 'constant', constant_values=0)
 
     def checkAreaSize(self, corners=None):
         """
@@ -280,3 +291,23 @@ def get_node_plot_corners(node):
         node {mask_node} -- node obj
     """
     return [node.corner_BL[0], node.corner_TR[0], node.corner_BL[1], node.corner_TR[1]]
+
+
+def fix_boarder_corners(mask, corners):
+    """ fix when masks are larger than corners indicated when near boarder
+    Arguments:
+        mask {np.array} -- mask
+        corners {list} -- of tuples
+    """
+    m_mask, n_mask = mask.shape
+    corners = [list(corners[0]), list(corners[1])]
+    if corners[1][0] - corners[0][0] != m_mask or corners[1][1] - corners[0][1] != n_mask:  # only check if issue
+        if corners[0][0] == 0:
+            corners[0][0] = -1
+        if corners[0][1] == 0:
+            corners[0][1] = -1
+        if corners[1][0] == galfa_const.GALFA_Y_STEPS - 1:
+            corners[1][0] = galfa_const.GALFA_Y_STEPS
+        if corners[1][1] == galfa_const.GALFA_X_STEPS - 1:
+            corners[1][1] = galfa_const.GALFA_X_STEPS
+    return corners

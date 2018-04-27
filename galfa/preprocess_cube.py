@@ -115,7 +115,7 @@ def preprocess_singleslice_filfind_struct(file_dir, file_name, slice_v_index, x_
     if len(nodes_in_slice) == 0:
         print "\n\tNO objects in slice %d" % slice_v_index
     else:
-        print('\n\t{0} objects found in slice {1}'.format(len(nodes_in_slice, slice_v_index)))
+        print('\n\t{0} objects found in slice {1}'.format(len(nodes_in_slice), slice_v_index))
 
     del full_slice
 
@@ -146,16 +146,19 @@ def process_dataslice_filfind_struct(data, hdr, slice_v_index, verbose_process=F
     hdr['BUNIT'] = 'k'  # as opposed to 'k (tb)' which isn't recognized by astropy.units
     fils = FilFinder2D(data, header=hdr, distance=100. * u.pc, beamwidth=10. * u.arcmin)
     fils.preprocess_image(flatten_percent=95)
-    standard_width = 0.2 * u.pc  # from experments
+    standard_width = 0.1 * u.pc  # from experments
     mask_objs, corners = fils.create_mask(smooth_size=standard_width / 2,
                                           adapt_thresh=standard_width * 2,
-                                          size_thresh=standard_width ** 2 * 4 * np.pi,
+                                          size_thresh=standard_width ** 2 * 6 * np.pi,
                                           border_masking=False, output_mask_objs=True)
 
     # put returned masks in a dict of mask_obj_nodes
     nodes_in_dataslice = {}
-    for i in range(len(mask_objs)):
-        this_mask_node = maskNode.MaskObjNode(mask_objs[i], mask_objs[i], slice_v_index)
-        struct_util.add_node_to_dict(this_mask_node, nodes_in_dataslice)
+    if mask_objs is None:
+        return nodes_in_dataslice
+    else:
+        for i in range(len(mask_objs)):
+            this_mask_node = maskNode.MaskObjNode(mask_objs[i], corners[i], slice_v_index)
+            struct_util.add_node_to_dict(this_mask_node, nodes_in_dataslice)
 
     return nodes_in_dataslice
