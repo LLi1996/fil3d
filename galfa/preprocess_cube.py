@@ -1,5 +1,7 @@
 '''
-This takes in a GALFA cube and processes it into a dict of dict of masks
+This takes in a GALFA slice/cube and processes it into dicts of masks
+
+If requried, this will pre process the file by usharpmasking
 '''
 
 # imports
@@ -8,15 +10,13 @@ from astropy import units as u
 from cube_fil_finder.structs import util as struct_util
 from cube_fil_finder.util import cube_util
 from fil_finder import FilFinder2D
-import glob
 import mask_obj_node as maskNode
 import pickle
-import numpy as np
 
 
 def preprocess_cube_filfind_struct(file_dir, file_name, v_range, x_range, y_range,
                                    save_struct=True, verbose_process=False, verbose=True):
-    '''
+    ''' DEPRECATED
     Takes a GALFA data cube file, cuts it to the specified dimentions, and
     processes it slice by slice to find strucutres on each v slice with filfind.
     Each mask found by filfind on a single v slice is put into a dict with its

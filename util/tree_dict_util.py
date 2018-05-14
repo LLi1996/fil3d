@@ -1,6 +1,6 @@
 """
-contains all the functions related to processing a cube and parsing data
-
+matching and finding trees
+outputting distribution for a dicts of trees
 """
 
 import sys

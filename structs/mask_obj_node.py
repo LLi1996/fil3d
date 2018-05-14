@@ -33,6 +33,9 @@ class MaskObjNode:
         self.corner_TR = [corners[1][1], corners[1][0]]
         self.corners = [self.corner_BL, self.corner_TR]
         self.corners_original = corners
+        # should really just use corners_original and stick to np indexing
+        # for future references use self.corners_original
+        # other fields preserved for backward compatibility
 
         self.v_slice_index = [v_slice_index]
 
@@ -65,30 +68,6 @@ class MaskObjNode:
         self.masked_area_size = combined_masked_area_size
 
         return True
-
-    def mergeNodeAlt(self, other_node):
-        """
-        alt mergeNode function
-        """
-        '''
-        comboMask = [[0 for x in range(maxBR_X-TL_X)] for y in range(BR_Y - TL_Y)]
-        radj_1 = TL_Y - mask1.leftcorner.y
-        cadj_1 = TL_X - mask1.leftcorner.x
-
-        for r in range(len(mask1)):
-            for c in range(len(mask1[r])):
-                comboMask[r-radj1][c-cadj1] = mask1[r][c]
-
-        radj_2 = TL_Y - mask2.leftcorner.y
-        cadj_2 = TL_X - mask2.leftcorner.x
-
-        for r in range(len(mask2)):
-            for c in range(len(mask2[r])):
-                if mask2[r][c] == 1:
-                    comboMask[r-radj2][c-cadj2] = mask2[r][c]
-
-        return new mask(comboMask,TL_X,TL_Y,BL_X,BL_Y)
-        '''
 
     def checkMaskOverlap(self, other_node, overlap_thresh):
         """

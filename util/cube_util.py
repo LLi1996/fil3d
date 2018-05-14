@@ -1,5 +1,5 @@
 """
-utility functions related to galfa cubes
+utility functions related to cleaning data cubes
 
 LL2017
 

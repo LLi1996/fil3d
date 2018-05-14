@@ -1,5 +1,7 @@
 """
 GALFA specific util functions
+translating between pixel coordinates and real world coordinates for galfa slices
+cutting out data cubes from galfa slices given a tree with corners and velocity info
 
 """
 

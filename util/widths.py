@@ -1,5 +1,5 @@
 """
-for widths
+for widths calculations from filfinder
 """
 
 from astropy import units as u

@@ -51,7 +51,7 @@ def main():
     tree_dict_util.end_noncontinuous_trees(all_trees, galfa_const.GALFA_SELECT_V_SLICES_RANGE[1] + 1)
     tree_dict_util.delete_short_dead_trees(all_trees, verbose=args.verbose)
 
-    save_dir = '../../pickled_dicts/width_comp_low_1/'
+    save_dir = '../../pickled_dicts/fourth_batch/'
     save_name = 'all_trees.p'
     save_path = save_dir + save_name
 

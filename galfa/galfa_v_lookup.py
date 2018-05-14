@@ -1,4 +1,5 @@
 # galfa velocity lookup
+# hack. there's probably a better way to do this
 GALFA_V_LOOKUP_W = [
                  -753.42172633,
                  -752.68560349,

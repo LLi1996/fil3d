@@ -1,6 +1,9 @@
 """
 Utility functinos related to nodes and trees
 
+simple hash functions for the names of nodes and trees
+sorting function based on the hashed names
+
 LL2017
 """
 

@@ -1,6 +1,8 @@
 """
 GALFA constants
 
+steps and ranges and a fake header dict
+
 LL2017
 """
 
