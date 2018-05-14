@@ -2,8 +2,9 @@
 for widths
 """
 
+from astropy import units as u
 import numpy as np
-import filfind_class as filfind
+from fil_finder import FilFinder2D
 
 
 def get_width_fit_filfind(moment_0_map, tree, hdr):
@@ -15,20 +16,25 @@ def get_width_fit_filfind(moment_0_map, tree, hdr):
     Returns:
         list -- Amplitude, Width, Background, FWHM
     """
-    fils = filfind.fil_finder_2D(moment_0_map, header=hdr, beamwidth=10.0, glob_thresh=20,
-                                 distance=100, flatten_thresh=95, standard_width=0.5,
-                                 size_thresh=600, mask=tree.root_node.mask)
+    hdr['BUNIT'] = 'k'  # as opposed to 'k (tb)' which isn't recognized by astropy.units
+    mask = tree.root_node.mask
+
+    fils = FilFinder2D(moment_0_map, header=hdr, distance=100. * u.pc, beamwidth=10. * u.arcmin,
+                       mask=mask)
+    fils.preprocess_image(flatten_percent=95)
+    fils.create_mask(use_existing_mask=True)
+
     fils.medskel()
-    fils.analyze_skeletons(skel_thresh=1000.0, branch_thresh=50)
+    fils.analyze_skeletons(skel_thresh=0.1 * 8 * u.pc)
     fils.exec_rht()
-    fils.find_widths(verbose=False, try_nonparam=False, auto_cut=False, max_distance=0.6)
+    fils.find_widths(try_nonparam=False, auto_cut=False, add_width_to_length=False,
+                     xunit=u.pc, max_dist=0.6 * u.pc, deconvolve_width=False)
 
-    if fils.number_of_filaments == 1:
-        width_fit = fils.width_fits['Parameters'][0, :]
-        width_fit_err = fils.width_fits['Errors'][0, :]
+    main_filament_index = np.argmax(fils.lengths())
+    if np.isnan(fils.filaments[main_filament_index]._fwhm):
+        return np.nan, np.nan
     else:
-        main_filament_index = np.argmax(fils.lengths)
-        width_fit = fils.width_fits['Parameters'][main_filament_index, :]
-        width_fit_err = fils.width_fits['Errors'][main_filament_index, :]
+        width_fit = fils.widths(unit=u.pc)[0][main_filament_index].value
+        width_fit_err = fils.widths(unit=u.pc)[1][main_filament_index].value
 
-    return width_fit, width_fit_err
+        return width_fit, width_fit_err

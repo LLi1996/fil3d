@@ -38,9 +38,8 @@ def find_all_trees_from_slices(vs, dict_full_paths, overlap_thresh=.85, reverse_
         node_dict_path = dict_full_paths[i]
         nodes_in_v_slice = pickle.load(open(node_dict_path, 'rb'))
 
-        if verbose:
-            print("working on v slice %d..." % vs[i])
-            print("continuous_trees: {0}".format(len(continuous_trees)))
+        print("working on v slice %d..." % vs[i])
+        print("continuous_trees: {0}".format(len(continuous_trees)))
 
         # iterate through the nodes in descending order (by masked area)
         for k in struct_util.sorted_struct_dict_keys_by_area(nodes_in_v_slice.keys(), key_type='node'):
@@ -82,7 +81,7 @@ def match_and_add_node_onto_tree(node, v_index, trees, overlap_thresh, continuou
     if verbose:
         print("\t\tmatching...")
 
-    if not trees:
+    if not trees and verbose:
         print("\t\tno match found -- empty tree dict")
         return has_matched
     else:
@@ -98,9 +97,10 @@ def match_and_add_node_onto_tree(node, v_index, trees, overlap_thresh, continuou
                     has_matched = True
                     if v_index == trees[k].getLastNode().v_slice_index[0]:
                         trees[k].getLastNode().combineMask(node, merge_type='OR')
-                    #print(trees[k].root_node.mask.shape)
-                    #print(trees[k].root_node.corners_original)
-                    trees[k].addNode(node, verbose, new_channel=False)
+                        trees[k].addNode(node, verbose=verbose, new_channel=False)
+                    else:
+                        trees[k].addNode(node, verbose=verbose, new_channel=True)
+
                     #print(trees[k].root_node.mask.shape)
                     #print(trees[k].root_node.corners_original)
                     if verbose:

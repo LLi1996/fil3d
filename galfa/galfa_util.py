@@ -3,6 +3,7 @@ GALFA specific util functions
 
 """
 
+import copy
 from astropy.io import fits
 import glob
 from cube_fil_finder.galfa import galfa_const
@@ -11,7 +12,8 @@ from cube_fil_finder.util import cube_util
 import numpy as np
 
 
-DATA_SLICE_BASE_DIR = '/Volumes/LarryExternal1/Research_2017/GALFA_slices_backup/umask_gaussian_30/'
+DATA_SLICE_BASE_DIR_30 = '/Volumes/LarryExternal1/Research_2017/GALFA_slices_backup/umask_gaussian_30/'
+DATA_SLICE_BASE_DIR__RAW = '/Volumes/LarryExternal1/Research_2017/GALFA_slices_backup/unprocessed_slices_from_susan/'
 
 
 def get_galfa_slice_paths_from_tree(tree, data_dir=None):
@@ -91,18 +93,35 @@ def cut_galfa_slice_from_corners(data_slice, corners):
     Return:
         cut_data_slice {2d np.array}
     """
-    cut_data_slice = data_slice[corners[0][1]:corners[1][1], corners[0][0]:corners[1][0]]
+    cut_corners = copy.deepcopy(corners)
+    if cut_corners[0][0] == -1:
+        cut_corners[0][0] = 0
+    elif cut_corners[1][0] == galfa_const.GALFA_X_STEPS:
+        cut_corners[1][0] = galfa_const.GALFA_X_STEPS - 1
+
+    if cut_corners[0][1] == -1:
+        cut_corners[0][1] = 0
+    elif cut_corners[1][1] == galfa_const.GALFA_Y_STEPS:
+        cut_corners[1][1] = galfa_const.GALFA_Y_STEPS - 1
+
+    cut_data_slice = data_slice[cut_corners[0][1]:cut_corners[1][1], cut_corners[0][0]:cut_corners[1][0]]
     return cut_data_slice
 
 
-def get_galfa_data_cube_from_tree(tree):
+def get_galfa_data_cube_from_tree(tree, cube_type='umask30'):
     """ cut out a data cube from galfa data from given tree spec
     Arguments:
         tree {maskTree} -- tree
+    Keyword Arguments:
+        cube_type {str} -- (default: {'umask30'})
     Returns:
         3d np.array -- v,y,x
     """
-    data_slice_paths = get_galfa_slice_paths_from_tree(tree, data_dir=DATA_SLICE_BASE_DIR)
+    if cube_type == 'umask30':
+        data_dir = DATA_SLICE_BASE_DIR_30
+    elif cube_type == 'raw':
+        data_dir = DATA_SLICE_BASE_DIR__RAW
+    data_slice_paths = get_galfa_slice_paths_from_tree(tree, data_dir=data_dir)
     data_cube = get_cut_cube_from_galfa_slice_paths(data_slice_paths, tree)
     return data_cube
 
@@ -117,7 +136,6 @@ def galfa_index_to_lb(xs, ys, verbose=False):
     Returns:
         ls, bs {np.array} -- of ls bs
     """
-    hdr = galfa_const.MOCK_GALFA_HDR
     ras, decs = galfa_index_to_radecs(xs, ys, verbose=verbose)
     return cube_util.radecs_to_lb(ras, decs)
 
@@ -130,7 +148,6 @@ def lbs_to_galfa_index(ls, bs, remin=False, verbose=False):
     Keyword Arguments:
         verbose {bool} -- (default: {False})
     """
-    hdr = galfa_const.MOCK_GALFA_HDR
     ras, decs = cube_util.lbs_to_radecs(ls, bs, remin=remin)
     return radec_to_galfa_index(ras, decs, verbose=verbose)
 

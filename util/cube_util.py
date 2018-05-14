@@ -26,7 +26,7 @@ def circ_kern(diameter):
     return np.less_equal(rads, r).astype(np.int)
 
 
-def umask(data, radius=15, filter_opt='tophat', smr_mask=None):
+def umask(data, radius=15, filter_opt='tophat', smr_mask=None, verbose=False):
     """
     unsharp masking of a data slice
     taken from https://github.com/seclark/RHT/blob/master/rht.py
@@ -37,7 +37,8 @@ def umask(data, radius=15, filter_opt='tophat', smr_mask=None):
     assert data.ndim == 2
 
     if filter_opt == 'tophat':
-        print "doing tophat umask filter"
+        if verbose:
+            print "doing tophat umask filter"
         kernel = circ_kern(2 * radius + 1)
         outdata = scipy.ndimage.filters.correlate(data, kernel)
 
@@ -47,10 +48,12 @@ def umask(data, radius=15, filter_opt='tophat', smr_mask=None):
         fin_out_data = data - outdata / kernweight
 
     elif filter_opt == 'gaussian':
-        print "doing gaussian umask filter"
+        if verbose:
+            print "doing gaussian umask filter"
         # we want the FWHM to = radius so we do the FWHM = 2(2ln2)^.5 sigma conversion
         sigma = float(radius) / (8 * math.log(2)) ** 0.5
-        print sigma
+        if verbose:
+            print sigma
         fin_out_data = data - scipy.ndimage.filters.gaussian_filter(data, sigma)
 
     else:

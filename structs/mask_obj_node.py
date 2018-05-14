@@ -25,7 +25,7 @@ class MaskObjNode:
         """
 
         self.mask = mask_obj
-        corners = fix_boarder_corners(corners)
+        corners = fix_boarder_corners(self.mask, corners)
 
         # corners are [(topleft)[i,j],(bottom right)[i,j]]
         # organize corners into list of lists instead of list of tups and convert into [x,y]

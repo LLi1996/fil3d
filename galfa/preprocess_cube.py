@@ -149,7 +149,7 @@ def process_dataslice_filfind_struct(data, hdr, slice_v_index, verbose_process=F
     standard_width = 0.1 * u.pc  # from experments
     mask_objs, corners = fils.create_mask(smooth_size=standard_width / 2,
                                           adapt_thresh=standard_width * 2,
-                                          size_thresh=standard_width ** 2 * 6 * np.pi,
+                                          size_thresh=(standard_width * 2) ** 2 * 8,
                                           border_masking=False, output_mask_objs=True)
 
     # put returned masks in a dict of mask_obj_nodes
