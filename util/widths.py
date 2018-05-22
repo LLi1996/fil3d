@@ -28,13 +28,15 @@ def get_width_fit_filfind(moment_0_map, tree, hdr):
     fils.analyze_skeletons(skel_thresh=0.1 * 8 * u.pc)
     fils.exec_rht()
     fils.find_widths(try_nonparam=False, auto_cut=False, add_width_to_length=False,
-                     xunit=u.pc, max_dist=0.6 * u.pc, deconvolve_width=False)
+                     xunit=u.pc, max_dist=0.5 * u.pc, deconvolve_width=False)
 
-    main_filament_index = np.argmax(fils.lengths())
+    main_filament_index = np.nanargmax(fils.lengths())
     if np.isnan(fils.filaments[main_filament_index]._fwhm):
-        return np.nan, np.nan
+        return np.nan, np.nan, np.nan
     else:
         width_fit = fils.widths(unit=u.pc)[0][main_filament_index].value
         width_fit_err = fils.widths(unit=u.pc)[1][main_filament_index].value
+        # hack, need to modify filament.py, add     self._radprof_chisq = chisq     to line 923
+        red_chisq = fils.filaments[main_filament_index]._radprof_chisq
 
-        return width_fit, width_fit_err
+        return width_fit, width_fit_err, red_chisq
