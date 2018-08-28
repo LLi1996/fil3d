@@ -2,6 +2,12 @@
 node vis lib
 """
 
+import numpy as np
+from cube_fil_finder.structs import mask_obj_node as maskNode
+from cube_fil_finder.util import moments
+from cube_fil_finder.galfa import galfa_const
+import matplotlib.pyplot as plt
+
 
 def vis_node_mask_moments(mask_node, mask_name, save_fig=False, save_dir=None,
                           save_name=None, figsize=None, return_fig=False):
@@ -26,7 +32,7 @@ def vis_node_mask_moments(mask_node, mask_name, save_fig=False, save_dir=None,
 
     plot_corners = maskNode.get_node_plot_corners(mask_node)
 
-    x_bar, y_bar, theta_1, theta_2, roundness = moments.get_mask_node_orientation_info(mask_node)
+    x_bar, y_bar, theta_1, theta_2, roundness = moments.get_node_mask_orientation_info(mask_node)
 
     fig = plt.figure(figsize=figsize)
     ax = fig.add_subplot(111)
