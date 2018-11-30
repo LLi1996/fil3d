@@ -19,7 +19,7 @@ def get_width_fit_filfind(moment_0_map, tree, hdr):
     hdr['BUNIT'] = 'k'  # as opposed to 'k (tb)' which isn't recognized by astropy.units
     mask = tree.root_node.mask
 
-    fils = FilFinder2D(moment_0_map, header=hdr, distance=100. * u.pc, beamwidth=10. * u.arcmin,
+    fils = FilFinder2D(moment_0_map, header=hdr, distance=100. * u.pc, beamwidth=4. * u.arcmin,
                        mask=mask)
     fils.preprocess_image(flatten_percent=95)
     fils.create_mask(use_existing_mask=True)
