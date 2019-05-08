@@ -61,7 +61,7 @@ def umask(data, radius=15, filter_opt='tophat', smr_mask=None, verbose=False):
 
     fin_out_data[np.where(fin_out_data < 0.0)] = 0
 
-    print np.shape(fin_out_data)
+    # print np.shape(fin_out_data)
 
     # set NaNs to 0??
     # subtr_data[np.where(subtr_data == np.NaN)] = 0

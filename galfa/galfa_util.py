@@ -18,7 +18,7 @@ DATA_SLICE_BASE_DIR_30 = '/Volumes/LarryExternal1/Research_2017/GALFA_slices_bac
 DATA_SLICE_BASE_DIR__RAW = '/Volumes/LarryExternal1/Research_2017/GALFA_slices_backup/unprocessed_slices_from_susan/'
 
 
-def get_galfa_slice_paths_from_tree(tree, data_dir=None):
+def get_galfa_slice_paths_from_tree(tree, data_dir=None, pad_slices=0):
     """gets the paths to galfa slices from a tree and data directory
     Arguments:
         tree {maskTree} -- of masks
@@ -31,12 +31,19 @@ def get_galfa_slice_paths_from_tree(tree, data_dir=None):
     length = tree.length
     starting_slice_index = tree.root_v_slice
 
+    # apply padding
+    if starting_slice_index - pad_slices < galfa_const.GALFA_SELECT_V_SLICES_RANGE[0] \
+        or starting_slice_index + length + pad_slices > galfa_const.GALFA_SELECT_V_SLICES_RANGE[1]:
+        raise ValueError('can\'t pad, index out of range')
+    else:
+        starting_slice_index = starting_slice_index - pad_slices
+
     slice_base_dir = galfa_const.GALFA_BACKUP_DATA_DIR if data_dir is None else data_dir
 
     if slice_base_dir[-1] != '/':
         slice_base_dir = slice_base_dir + '/'
 
-    for i in range(length):
+    for i in range(length + 2 * pad_slices):
         slice_path = glob.glob(slice_base_dir + '*{0}*'.format(str(starting_slice_index + i)))[0]
         slice_paths_list.append(slice_path)
 
@@ -45,7 +52,7 @@ def get_galfa_slice_paths_from_tree(tree, data_dir=None):
     return slice_paths_list
 
 
-def get_cut_cube_from_galfa_slice_paths(slice_paths_list, tree=None):
+def get_cut_cube_from_galfa_slice_paths(slice_paths_list, tree=None, pad_slices=0):
     """gets a cut data cube specifed by the dimention of the node and length of
     the slice_path_list
     Arguments:
@@ -110,12 +117,13 @@ def cut_galfa_slice_from_corners(data_slice, corners):
     return cut_data_slice
 
 
-def get_galfa_data_cube_from_tree(tree, cube_type='umask30'):
+def get_galfa_data_cube_from_tree(tree, cube_type='umask30', pad_slices=0):
     """ cut out a data cube from galfa data from given tree spec
     Arguments:
         tree {maskTree} -- tree
     Keyword Arguments:
         cube_type {str} -- (default: {'umask30'})
+        pad_slices {int} -- (default: 0)
     Returns:
         3d np.array -- v,y,x
     """
@@ -123,8 +131,8 @@ def get_galfa_data_cube_from_tree(tree, cube_type='umask30'):
         data_dir = DATA_SLICE_BASE_DIR_30
     elif cube_type == 'raw':
         data_dir = DATA_SLICE_BASE_DIR__RAW
-    data_slice_paths = get_galfa_slice_paths_from_tree(tree, data_dir=data_dir)
-    data_cube = get_cut_cube_from_galfa_slice_paths(data_slice_paths, tree)
+    data_slice_paths = get_galfa_slice_paths_from_tree(tree, data_dir=data_dir, pad_slices=pad_slices)
+    data_cube = get_cut_cube_from_galfa_slice_paths(data_slice_paths, tree, pad_slices=pad_slices)
     return data_cube
 
 
