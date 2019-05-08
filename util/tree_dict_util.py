@@ -3,6 +3,8 @@ matching and finding trees
 outputting distribution for a dicts of trees
 """
 
+import logging
+
 import sys
 import pickle
 import numpy as np
@@ -29,8 +31,7 @@ def find_all_trees_from_slices(vs, dict_full_paths, overlap_thresh=.85, reverse_
     trees = {}
 
     if len(vs) != len(dict_full_paths):
-        print("\n\nLength of velocities and dictionaries don't match")
-        sys.exit()
+        raise RuntimeError("\n\nLength of velocities and dictionaries don't match")
 
     continuous_trees = set()
     # iterate through every velocity channel to match nodes
@@ -38,20 +39,19 @@ def find_all_trees_from_slices(vs, dict_full_paths, overlap_thresh=.85, reverse_
         node_dict_path = dict_full_paths[i]
         nodes_in_v_slice = pickle.load(open(node_dict_path, 'rb'))
 
-        print("working on v slice %d..." % vs[i])
-        print("continuous_trees: {0}".format(len(continuous_trees)))
+        logging.info("working on v slice %d..." % vs[i])
+        logging.info("continuous_trees: {0}".format(len(continuous_trees)))
 
         # iterate through the nodes in descending order (by masked area)
         for k in struct_util.sorted_struct_dict_keys_by_area(nodes_in_v_slice.keys(), key_type='node'):
             current_node = nodes_in_v_slice[k]
 
             if verbose:
-                print("\ton mask {}".format(k))
+                logging.info("\ton mask {}".format(k))
 
             # match and add node, if not matched, create new tree and add to dict of trees
-            if not match_and_add_node_onto_tree(current_node, vs[i], trees,
-                                                overlap_thresh, continuous_trees=continuous_trees,
-                                                verbose=verbose):
+            if not match_and_add_node_onto_tree(current_node, vs[i], trees, overlap_thresh,
+                                                continuous_tree_keys=continuous_trees):
                 new_tree = maskTree.newTreeFromNode(current_node, verbose=verbose)
                 struct_util.add_tree_to_dict(new_tree, trees)
 
@@ -64,7 +64,7 @@ def find_all_trees_from_slices(vs, dict_full_paths, overlap_thresh=.85, reverse_
     return trees
 
 
-def match_and_add_node_onto_tree(node, v_index, trees, overlap_thresh, continuous_trees=None, verbose=False):
+def match_and_add_node_onto_tree(node, v_index, trees, overlap_thresh, continuous_tree_keys=None):
     """
     matches a node to an existing tree in the set of trees
 
@@ -73,44 +73,51 @@ def match_and_add_node_onto_tree(node, v_index, trees, overlap_thresh, continuou
         trees {dict} -- of trees
     Keyword Args:
         continuous_trees {set} -- of tree keys that have't ended
+            for caching on matching
     Returns:
         True -- if the node as been matched
     """
     has_matched = False
 
-    if verbose:
-        print("\t\tmatching...")
+    logging.debug("begin matching node to trees...")
 
-    if not trees and verbose:
-        print("\t\tno match found -- empty tree dict")
+    if not trees:
+        logging.warn("no match found -- empty tree dict (this is fine during the first iteration)")
         return has_matched
     else:
         # iterate through the trees in descending order to match node
-        keys = trees.keys() if continuous_trees is None else continuous_trees
+        keys = trees.keys() if continuous_tree_keys is None else continuous_tree_keys
         for k in struct_util.sorted_struct_dict_keys_by_area(keys, key_type='tree'):
-            if continuous_trees is None and trees[k].has_ended:
+            tree = trees[k]
+            if continuous_tree_keys is None and tree.has_ended:
                 continue
             else:
                 # match and add node, if not matched continue
-                if trees[k].getLastNode().checkMaskOverlap(node, overlap_thresh):
+                node_to_match_to = tree.getLastNode()
+                tree_has_node_on_current_v_slice = node_to_match_to.v_slice_index[0] == v_index
+                if tree_has_node_on_current_v_slice:
+                    # the tree has already been matched with a node on this velocity channel
+                    # in this case the node_to_match_to isn't the last node (since that'll be on the current velocity
+                    # slice, but rather the node that was before that, so
+                    node_to_match_to = tree.getNode(tree.length - 2)
+
+                if node_to_match_to.checkMaskOverlap(node, overlap_thresh):
                     node.visited = True
                     has_matched = True
-                    if v_index == trees[k].getLastNode().v_slice_index[0]:
-                        trees[k].getLastNode().combineMask(node, merge_type='OR')
-                        trees[k].addNode(node, verbose=verbose, new_channel=False)
+                    if tree_has_node_on_current_v_slice:
+                        tree.addNodeOnSameVChannel(node)
                     else:
-                        trees[k].addNode(node, verbose=verbose, new_channel=True)
+                        tree.addNodeOnNewVChannel(node)
 
-                    #print(trees[k].root_node.mask.shape)
-                    #print(trees[k].root_node.corners_original)
-                    if verbose:
-                        print("\t\tmatch found -- tree %s" % k)
-                    return has_matched
+                    #logging.debug(trees[k].root_node.mask.shape)
+                    #logging.debug(trees[k].root_node.corners_original)
+                    logging.info("match found -- tree %s" % k)
                 else:
                     continue
 
-    if verbose:
-        print("\t\tno match found -- searched through tree dict")
+    if not has_matched:
+        logging.info("no match found -- searched through tree dict")
+
     return has_matched
 
 
@@ -146,7 +153,7 @@ def delete_short_dead_trees(trees, length_cutoff=1, size_cutoff=2500, verbose=Fa
                 bad_trees_keys.append(k)
 
     if verbose:
-        print("\tdeleting %d trees that are small & dead" % len(bad_trees_keys))
+        logging.info("\tdeleting %d trees that are small & dead" % len(bad_trees_keys))
 
     for k in bad_trees_keys:
         del trees[k]
@@ -169,7 +176,7 @@ def prune_trees(all_trees, size_cut=30, length_cut=3, length_limit=36, verbose=F
             continue
 
     if verbose:
-        print "\t\t deleting %d trees that don't fit the criteria" % len(bad_trees_keys)
+        logging.info("\t\t deleting %d trees that don't fit the criteria" % len(bad_trees_keys))
 
     for k in bad_trees_keys:
         del pruned_trees[k]

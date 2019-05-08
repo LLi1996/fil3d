@@ -1,3 +1,4 @@
+import logging
 import copy
 import numpy as np
 
@@ -22,7 +23,7 @@ class MaskObjNodeTree:
 
         self.has_ended = False
 
-    def addNode(self, new_node, new_channel=True, verbose=False):
+    def addNodeOnNewVChannel(self, new_node, verbose=False):
         if verbose:
             print "Adding node to root"
             print "Old corners: " + str(self.root_node.corners)
@@ -30,8 +31,7 @@ class MaskObjNodeTree:
 
         self.root_node.mergeNode(new_node)
         self.node_list.append(new_node)
-        if new_channel:
-            self.length += 1
+        self.length += 1
 
         if hasattr(self.root_node, 'corners_original'):
             self.root_node.corners_original = [[self.root_node.corner_BL[1], self.root_node.corner_BL[0]],
@@ -40,6 +40,20 @@ class MaskObjNodeTree:
         if verbose:
             print "New corners: " + str(self.root_node.corners)
         return self.length
+
+    def addNodeOnSameVChannel(self, new_node):
+        logging.debug("merging node to root")
+        logging.debug("Old corners: " + str(self.root_node.corners))
+        logging.debug("New node's corners: " + str(new_node.corners))
+
+        # merging the new node into the root_node
+        self.root_node.mergeNode(new_node)
+        if hasattr(self.root_node, 'corners_original'):  # is this necessary?
+            self.root_node.corners_original = [[self.root_node.corner_BL[1], self.root_node.corner_BL[0]],
+                                               [self.root_node.corner_TR[1], self.root_node.corner_TR[0]]]
+
+        # merging the new node into the last node so len(self.node_list) == self.length
+        self.getLastNode().mergeNode(new_node)
 
     def getNode(self, node_number):
         return self.node_list[node_number]
