@@ -51,20 +51,20 @@ def find_all_trees_from_slices(vs, dict_full_paths, overlap_thresh=.85, reverse_
 
             # match and add node, if not matched, create new tree and add to dict of trees
             if not match_and_add_node_onto_tree(current_node, vs[i], trees, overlap_thresh,
-                                                continuous_tree_keys=continuous_trees):
+                                                continuous_trees=continuous_trees):
                 new_tree = maskTree.newTreeFromNode(current_node, verbose=verbose)
                 struct_util.add_tree_to_dict(new_tree, trees)
 
         # keep the tree dict compact
         continuous_trees = end_noncontinuous_trees(trees, vs[i])
-        delete_short_dead_trees(trees, verbose=verbose)
+        # delete_short_dead_trees(trees, verbose=verbose)
 
-        del nodes_in_v_slice
+        #del nodes_in_v_slice
 
     return trees
 
 
-def match_and_add_node_onto_tree(node, v_index, trees, overlap_thresh, continuous_tree_keys=None):
+def match_and_add_node_onto_tree(node, v_index, trees, overlap_thresh, continuous_trees=None):
     """
     matches a node to an existing tree in the set of trees
 
@@ -86,10 +86,10 @@ def match_and_add_node_onto_tree(node, v_index, trees, overlap_thresh, continuou
         return has_matched
     else:
         # iterate through the trees in descending order to match node
-        keys = trees.keys() if continuous_tree_keys is None else continuous_tree_keys
+        keys = trees.keys() if continuous_trees is None else continuous_trees
         for k in struct_util.sorted_struct_dict_keys_by_area(keys, key_type='tree'):
             tree = trees[k]
-            if continuous_tree_keys is None and tree.has_ended:
+            if continuous_trees is None and tree.has_ended:
                 continue
             else:
                 # match and add node, if not matched continue
@@ -149,7 +149,7 @@ def delete_short_dead_trees(trees, length_cutoff=1, size_cutoff=2500, verbose=Fa
 
     for k in trees:
         if trees[k].has_ended:
-            if trees[k].getTreeMaskedArea2D() <= size_cutoff and trees[k].length <= length_cutoff:
+            if trees[k].getTreeMaskedArea2D() <= size_cutoff or trees[k].length <= length_cutoff:
                 bad_trees_keys.append(k)
 
     if verbose:
@@ -246,3 +246,54 @@ def get_mask_roundness_dist(trees):
     for k in trees:
         roundness.append(moments.get_tree_mask_orientation_info(trees[k])[4])
     return np.array(roundness)
+
+
+def is_point_on_node(node, point=(0, 0), strict=False):
+    """
+    checks if point is on a node
+
+    :param node: {MaskObjNode}
+    :param coord: {tup}/{list} (default: (0,0))
+        of two {int}
+        assumes in (i, j)
+    :param strict: {bool} (default: False)
+        if strict the binary mask needs to be ON at that point
+        of not will return True if point in corner bound
+
+    :return: {bool}
+    """
+    mask = node.mask
+    corner_min = node.corner_min
+    corner_max = node.corner_max
+    in_corner_bound = ((corner_min[0] <= point[0]) and (point[0] <= corner_max[0]) and
+                       (corner_min[1] <= point[1]) and (point[1] <= corner_max[1]))
+    if in_corner_bound:
+        if not strict:
+            return True
+        else:
+            localized_point = [point[i] - corner_min[i] for i in range(2)]
+            return bool(mask[localized_point[0], localized_point[1]])
+    else:
+        return False
+
+
+def find_nodes_on_point(nodes_dicts, point=(0, 0), strict=False):
+    """
+    :param nodes_dicts: {dict}
+        of {dict} of nodes
+    :param point: {tup}/{list}
+        of two {int}
+        assumes in (i, j)
+    :param strict: {bool} (default: False)
+        if strict the binary mask needs to be ON at that point
+        of not will return True if point in corner bound
+    :return nodes_dicts: {dict}
+    """
+    new_nodes_dicts = dict()
+    for nodes_dict_key, nodes_dict in nodes_dicts.items():
+        new_nodes_dict = {node_key: node
+                          for node_key, node in nodes_dict.items()
+                          if is_point_on_node(node, point, strict=strict)}
+        new_nodes_dicts[nodes_dict_key] = new_nodes_dict
+
+    return new_nodes_dicts
