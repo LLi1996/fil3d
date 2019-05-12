@@ -29,10 +29,12 @@ class MaskObjNode:
 
         # corners are [(topleft)[i,j],(bottom right)[i,j]]
         # organize corners into list of lists instead of list of tups and convert into [x,y]
-        self.corner_BL = [corners[0][1], corners[0][0]]
-        self.corner_TR = [corners[1][1], corners[1][0]]
-        self.corners = [self.corner_BL, self.corner_TR]
         self.corners_original = corners
+        self.corners = self.corners_original  # legacy
+        self.corner_min = self.corners_original[0]
+        self.corner_max = self.corners_original[1]
+        for i in range(2):
+            assert self.corner_max[i] > self.corner_min[i]
         # should really just use corners_original and stick to np indexing
         # for future references use self.corners_original
         # other fields preserved for backward compatibility
@@ -62,8 +64,9 @@ class MaskObjNode:
 
         self.mask = combined_or_mask
         self.corners = new_corners
-        self.corner_BL = new_corners[0]
-        self.corner_TR = new_corners[1]
+        self.corners_original = self.corners
+        self.corner_min = self.corners[0]
+        self.corner_max = self.corners[1]
         self.mask_size = self.checkAreaSize(new_corners)
         self.masked_area_size = combined_masked_area_size
 
@@ -103,10 +106,10 @@ class MaskObjNode:
             the new combined mask
         """
         new_corners = self.matchCorners(other_node)
-        r_dim = new_corners[1][1] - new_corners[0][1]
-        c_dim = new_corners[1][0] - new_corners[0][0]
+        m_dim = new_corners[1][0] - new_corners[0][0]
+        n_dim = new_corners[1][1] - new_corners[0][1]
 
-        combined_mask = np.zeros((r_dim, c_dim), dtype=bool)
+        combined_mask = np.zeros((m_dim, n_dim), dtype=bool)
 
         expanded_self_mask = self.expandMask(new_corners)
         expanded_other_mask = other_node.expandMask(new_corners)
@@ -126,13 +129,12 @@ class MaskObjNode:
         Returns:
             bool -- true if overlap
         """
-        if other_node.corner_BL[0] >= self.corner_TR[0] or \
-           other_node.corner_TR[0] <= self.corner_BL[0]:
+        # vertical mismatch
+        if other_node.corner_max[0] <= self.corner_min[0] or other_node.corner_min[0] >= self.corner_max[0]:
             return False
-        if other_node.corner_BL[1] >= self.corner_TR[1] or \
-           other_node.corner_TR[1] <= self.corner_BL[1]:
+        # horizontal mismatch
+        if other_node.corner_max[1] <= self.corner_min[1] or other_node.corner_min[1] >= self.corner_max[1]:
             return False
-
         return True
 
     def matchCorners(self, other_node):
@@ -144,13 +146,10 @@ class MaskObjNode:
         Returns:
             corners -- the corners of that square.
         """
-        BL_X = min(self.corner_BL[0], other_node.corner_BL[0])
-        BL_Y = min(self.corner_BL[1], other_node.corner_BL[1])
+        corner_min = [min(self.corner_min[i], other_node.corner_min[i]) for i in range(2)]
+        corner_max = [max(self.corner_max[i], other_node.corner_max[i]) for i in range(2)]
 
-        TR_X = max(self.corner_TR[0], other_node.corner_TR[0])
-        TR_Y = max(self.corner_TR[1], other_node.corner_TR[1])
-
-        return [[BL_X, BL_Y], [TR_X, TR_Y]]
+        return [corner_min, corner_max]
 
     def checkMaskedAreaSize(self, mask=None):
         """
@@ -177,22 +176,14 @@ class MaskObjNode:
         """
         mask = self.mask
 
-        if hasattr(self, 'corners_original'):  # clearer np indexing
-            np_corners = self.corners_original
-            np_corners_new = [(new_corners[0][1], new_corners[0][0]),
-                              (new_corners[1][1], new_corners[1][0])]
-            i_pad_before = np_corners[0][0] - np_corners_new[0][0]
-            i_pad_after = np_corners_new[1][0] - np_corners[1][0]
-            j_pad_before = np_corners[0][1] - np_corners_new[0][1]
-            j_pad_after = np_corners_new[1][1] - np_corners[1][1]
-            return np.pad(mask, ((i_pad_before, i_pad_after), (j_pad_before, j_pad_after)), 'constant', constant_values=0)
-        else:
-            old_corners = self.corners
-            t_Pad = abs(new_corners[1][1] - old_corners[1][1])
-            b_Pad = abs(new_corners[0][1] - old_corners[0][1])
-            l_Pad = abs(new_corners[0][0] - old_corners[0][0])
-            r_Pad = abs(new_corners[1][0] - old_corners[1][0])
-            return np.lib.pad(mask, ((b_Pad, t_Pad), (l_Pad, r_Pad)), 'constant', constant_values=0)
+        old_corners = self.corners_original
+        # now assume that new_corners are passed in as np indexing
+        i_pad_before = old_corners[0][0] - new_corners[0][0]
+        i_pad_after = new_corners[1][0] - old_corners[1][0]
+        j_pad_before = old_corners[0][1] - new_corners[0][1]
+        j_pad_after = new_corners[1][1] - old_corners[1][1]
+        return np.pad(mask, ((i_pad_before, i_pad_after), (j_pad_before, j_pad_after)), 'constant', constant_values=0)
+
 
     def checkAreaSize(self, corners=None):
         """
@@ -214,8 +205,8 @@ class MaskObjNode:
         Returns:
             int, int -- width, height
         """
-        width = self.corner_TR[0] - self.corner_BL[0]
-        height = self.corner_TR[1] - self.corner_BL[1]
+        height = self.corner_max[0] - self.corner_min[0]
+        width = self.corner_max[1] - self.corner_min[1]
 
         assert width > 0, "width is 0 or negative"
         assert height > 0, "height is 0 or negative"
@@ -249,8 +240,9 @@ def check_node_b_cutoff(node, hdr, b_cutoff=30):
     Returns:
         bool -- true if within cutoff, false if not
     """
-    xs = [node.corner_BL[0], node.corner_TR[0]]
-    ys = [node.corner_BL[1], node.corner_TR[1]]
+    ys = [node.corner_min[0], node.corner_max[0]]
+    xs = [node.corner_min[1], node.corner_max[1]]
+
 
     ras, decs = cube_util.index_to_radec(xs, ys, hdr)
     ls, bs = cube_util.radecs_to_lb(ras, decs)
@@ -269,7 +261,7 @@ def get_node_plot_corners(node):
     Arguments:
         node {mask_node} -- node obj
     """
-    return [node.corner_BL[0], node.corner_TR[0], node.corner_BL[1], node.corner_TR[1]]
+    return [node.corner_min[0], node.corner_max[1], node.corner_min[1], node.corner_max[1]]
 
 
 def fix_boarder_corners(mask, corners):

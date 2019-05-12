@@ -33,10 +33,6 @@ class MaskObjNodeTree:
         self.node_list.append(new_node)
         self.length += 1
 
-        if hasattr(self.root_node, 'corners_original'):
-            self.root_node.corners_original = [[self.root_node.corner_BL[1], self.root_node.corner_BL[0]],
-                                               [self.root_node.corner_TR[1], self.root_node.corner_TR[0]]]
-
         if verbose:
             print "New corners: " + str(self.root_node.corners)
         return self.length
@@ -48,9 +44,6 @@ class MaskObjNodeTree:
 
         # merging the new node into the root_node
         self.root_node.mergeNode(new_node)
-        if hasattr(self.root_node, 'corners_original'):  # is this necessary?
-            self.root_node.corners_original = [[self.root_node.corner_BL[1], self.root_node.corner_BL[0]],
-                                               [self.root_node.corner_TR[1], self.root_node.corner_TR[0]]]
 
         # merging the new node into the last node so len(self.node_list) == self.length
         self.getLastNode().mergeNode(new_node)
