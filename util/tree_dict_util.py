@@ -297,3 +297,24 @@ def find_nodes_on_point(nodes_dicts, point=(0, 0), strict=False):
         new_nodes_dicts[nodes_dict_key] = new_nodes_dict
 
     return new_nodes_dicts
+
+
+def find_trees_on_point(trees_dict, point=(0, 0), strict=False):
+    """
+    :param trees_dict: {dict}
+        of {dict} of trees
+    :param point: {tup}/{list}
+        of two {int}
+        assumes in (i, j)
+    :param strict: {bool} (default: False)
+        if strict the binary mask needs to be ON at that point
+        of not will return True if point in corner bound
+    :return nodes_dicts: {dict}
+    """
+    new_trees_dict = dict()
+    for tree_key, tree in trees_dict.items():
+        root_node = tree.root_node
+        if is_point_on_node(root_node, point, strict=strict):
+            new_trees_dict[tree_key] = tree
+
+    return new_trees_dict
