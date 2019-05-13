@@ -81,3 +81,39 @@ def vis_mask_sky_dist(mask_node, mask_name, save_fig=False, save_dir=None, save_
         fig.savefig(save_dir + save_name)
 
     plt.clf()
+
+
+def vis_mask_with_data(node, data, key=None, verbose=False, return_fig=False):
+
+    if len(data.shape) == 3:  # v info will be taken into account
+        data = data[node.v_slice_index[0]]
+    elif len(data.shape) == 2: # v info will not be taken into account
+        data = data
+    else:
+        raise ValueError('data is neither 2d or 3d')
+
+    corner_min = node.corner_min
+    corner_max = node.corner_max
+    mask = node.mask
+
+    cut_data = data[corner_min[0]: corner_max[0], corner_min[1]: corner_max[1]]
+
+    min_val, max_val = np.min(cut_data), np.max(cut_data)
+    min_cut, max_cut = np.percentile(cut_data, 5), np.percentile(cut_data, 95)
+
+    fig, ax = plt.subplots()
+
+    ax.imshow(cut_data.clip(min_cut, max_cut), origin='lower', cmap='binary')
+    ax.contour(mask, alpha=.5, colors='red', linewidths=.3)
+
+    ax.set_title('{0} ({1})'.format(key, [corner_min, corner_max]))
+
+    fig.tight_layout()
+
+    if verbose:
+        fig.show()
+
+    if return_fig:
+        return fig
+
+    plt.clf()

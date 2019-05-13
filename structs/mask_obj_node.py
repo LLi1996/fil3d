@@ -1,4 +1,6 @@
+import logging
 import numpy as np
+
 from cube_fil_finder.util import cube_util
 from cube_fil_finder.galfa import galfa_const
 
@@ -56,7 +58,7 @@ class MaskObjNode:
             self.v_slice_index.append(other_node.v_slice_index[0])
 
         if self.checkCornersOverlap(other_node) == False:
-            print "corners don't overlap!!!"
+            logging.warn('corners don\'t overlap!!!')
 
         combined_or_mask = self.combineMask(other_node, merge_type='OR')
         combined_masked_area_size = self.checkMaskedAreaSize(combined_or_mask)
