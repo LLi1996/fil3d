@@ -24,29 +24,37 @@ class MaskObjNodeTree:
         self.has_ended = False
 
     def addNodeOnNewVChannel(self, new_node, verbose=False):
-        if verbose:
-            print "Adding node to root"
-            print "Old corners: " + str(self.root_node.corners)
-            print "New node's corners: " + str(new_node.corners)
+        logging.debug("Adding node to tree (new velocity channel)")
+        logging.debug("New node's corners: " + str(new_node.corners))
 
+        logging.debug("Old root node corners: " + str(self.root_node.corners))
+
+        # merging the new node into the root_node
         self.root_node.mergeNode(new_node)
+
+        # adding the new node to the list of nodes
         self.node_list.append(new_node)
         self.length += 1
 
-        if verbose:
-            print "New corners: " + str(self.root_node.corners)
+        logging.debug("New root node corners: " + str(self.root_node.corners))
+
         return self.length
 
     def addNodeOnSameVChannel(self, new_node):
-        logging.debug("merging node to root")
-        logging.debug("Old corners: " + str(self.root_node.corners))
+        logging.debug("Adding node to tree (same velocity channel)")
         logging.debug("New node's corners: " + str(new_node.corners))
 
+        logging.debug("Old root node corners: " + str(self.root_node.corners))
         # merging the new node into the root_node
         self.root_node.mergeNode(new_node)
 
         # merging the new node into the last node so len(self.node_list) == self.length
         self.getLastNode().mergeNode(new_node)
+
+        logging.debug("New root node corners: " + str(self.root_node.corners))
+
+        return self.length
+
 
     def getNode(self, node_number):
         return self.node_list[node_number]

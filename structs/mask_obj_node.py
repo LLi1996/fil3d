@@ -58,7 +58,8 @@ class MaskObjNode:
             self.v_slice_index.append(other_node.v_slice_index[0])
 
         if self.checkCornersOverlap(other_node) == False:
-            logging.warn('corners don\'t overlap!!!')
+            logging.warn('corners don\'t overlap!' \
+                         + '(fine if using mergeNode() to consolidate two nodes on the same velocity channel)')
 
         combined_or_mask = self.combineMask(other_node, merge_type='OR')
         combined_masked_area_size = self.checkMaskedAreaSize(combined_or_mask)
