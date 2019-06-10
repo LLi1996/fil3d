@@ -31,40 +31,39 @@ def find_all_trees_from_slices(vs, dict_full_paths, overlap_thresh=.85, reverse_
     trees = {}
 
     if len(vs) != len(dict_full_paths):
-        raise RuntimeError("\n\nLength of velocities and dictionaries don't match")
+        raise RuntimeError("Length of velocities and dictionaries don't match")
 
-    continuous_trees = set()
+    continuous_tree_keys_set = set()
     # iterate through every velocity channel to match nodes
     for i in xrange(len(vs)):
         node_dict_path = dict_full_paths[i]
         nodes_in_v_slice = pickle.load(open(node_dict_path, 'rb'))
 
-        logging.info("working on v slice %d..." % vs[i])
-        logging.info("continuous_trees: {0}".format(len(continuous_trees)))
+        logging.info("working on v slice % {0} ...".format(vs[i]))
+        logging.debug("number of currently continuous trees: {0}".format(len(continuous_tree_keys_set)))
 
         # iterate through the nodes in descending order (by masked area)
         for k in struct_util.sorted_struct_dict_keys_by_area(nodes_in_v_slice.keys(), key_type='node'):
             current_node = nodes_in_v_slice[k]
 
-            if verbose:
-                logging.info("\ton mask {}".format(k))
+            logging.debug("on node {}".format(k))
 
             # match and add node, if not matched, create new tree and add to dict of trees
             if not match_and_add_node_onto_tree(current_node, vs[i], trees, overlap_thresh,
-                                                continuous_trees=continuous_trees):
+                                                continuous_tree_keys_set=continuous_tree_keys_set):
                 new_tree = maskTree.newTreeFromNode(current_node, verbose=verbose)
                 struct_util.add_tree_to_dict(new_tree, trees)
 
         # keep the tree dict compact
-        continuous_trees = end_noncontinuous_trees(trees, vs[i])
-        # delete_short_dead_trees(trees, verbose=verbose)
+        continuous_tree_keys_set = end_noncontinuous_trees(trees, vs[i])
+        delete_short_dead_trees(trees)
 
         #del nodes_in_v_slice
 
     return trees
 
 
-def match_and_add_node_onto_tree(node, v_index, trees, overlap_thresh, continuous_trees=None):
+def match_and_add_node_onto_tree(node, v_index, trees, overlap_thresh, continuous_tree_keys_set=None):
     """
     matches a node to an existing tree in the set of trees
 
@@ -78,44 +77,55 @@ def match_and_add_node_onto_tree(node, v_index, trees, overlap_thresh, continuou
         True -- if the node as been matched
     """
     has_matched = False
+    matches = 0
 
-    logging.debug("begin matching node to trees...")
+    logging.debug("matching node to trees ...")
 
     if not trees:
         logging.warn("no match found -- empty tree dict (this is fine during the first iteration)")
         return has_matched
     else:
         # iterate through the trees in descending order to match node
-        keys = trees.keys() if continuous_trees is None else continuous_trees
+        if continuous_tree_keys_set is not None:
+            logging.debug('using set of continuous tree keys for fast matching')
+            keys = continuous_tree_keys_set
+        else:
+            logging.debug('no continuous tree keys set passed in - will attempt to match to all trees')
+            keys = set(trees.keys())
+
         for k in struct_util.sorted_struct_dict_keys_by_area(keys, key_type='tree'):
             tree = trees[k]
-            if continuous_trees is None and tree.has_ended:
+            if tree.has_ended:
                 continue
             else:
                 # match and add node, if not matched continue
-                node_to_match_to = tree.getLastNode()
-                tree_has_node_on_current_v_slice = node_to_match_to.v_slice_index[0] == v_index
+                last_node_on_tree = tree.getLastNode()
+                tree_has_node_on_current_v_slice = last_node_on_tree.v_slice_index[0] == v_index
                 if tree_has_node_on_current_v_slice:
                     # the tree has already been matched with a node on this velocity channel
-                    # in this case the node_to_match_to isn't the last node (since that'll be on the current velocity
-                    # slice, but rather the node that was before that, so
+                    # in this case the last_node_on_tree isn't the node we want to match to (since that'll be on the
+                    # current velocity slice, and we want to match to the node that was before that
                     node_to_match_to = tree.getNode(tree.length - 2)
+                else:
+                    # if not then we just match to the last_node_on_tree
+                    node_to_match_to = last_node_on_tree
 
                 if node_to_match_to.checkMaskOverlap(node, overlap_thresh):
                     node.visited = True
                     has_matched = True
+                    matches += 1
                     if tree_has_node_on_current_v_slice:
                         tree.addNodeOnSameVChannel(node)
                     else:
                         tree.addNodeOnNewVChannel(node)
 
-                    #logging.debug(trees[k].root_node.mask.shape)
-                    #logging.debug(trees[k].root_node.corners_original)
-                    logging.info("match found -- tree %s" % k)
+                    logging.info("match found -- tree key: {0}".format(k))
                 else:
                     continue
 
-    if not has_matched:
+    if has_matched:
+        logging.info("found {0} matches in total".format(matches))
+    else:
         logging.info("no match found -- searched through tree dict")
 
     return has_matched
@@ -128,6 +138,7 @@ def end_noncontinuous_trees(trees, current_v):
         trees {dict} -- of trees
         current_v {int} -- the velocity slice that just finished matching
     """
+    logging.info('ending trees that are non-continuous ...')
     continuous_trees = set()
     for k in sorted(trees.keys()):
         if trees[k].has_ended:
@@ -139,24 +150,24 @@ def end_noncontinuous_trees(trees, current_v):
     return continuous_trees
 
 
-def delete_short_dead_trees(trees, length_cutoff=1, size_cutoff=2500, verbose=False):
+# size_cutoff was 2500
+def delete_short_dead_trees(trees, length_cutoff=1, size_cutoff=None, verbose=False):
     """
     delete all the trees that have length = 1 and have ended
     Arguments:
         tree_dict {dict} -- of trees
     """
-    bad_trees_keys = []
+    if size_cutoff is not None:
+        logging.warning('will ignore size_cutoff input')
 
-    for k in trees:
-        if trees[k].has_ended:
-            if trees[k].getTreeMaskedArea2D() <= size_cutoff or trees[k].length <= length_cutoff:
-                bad_trees_keys.append(k)
+    bad_trees_keys = [k for k, v in trees.items() if v.has_ended and v.length <= length_cutoff]
 
-    if verbose:
-        logging.info("\tdeleting %d trees that are small & dead" % len(bad_trees_keys))
+    logging.info("deleting {0} trees that are short (length <= {1}) & are non-continuous ..."
+                 .format(len(bad_trees_keys), length_cutoff))
 
     for k in bad_trees_keys:
         del trees[k]
+    return trees
 
 
 def prune_trees(all_trees, size_cut=30, length_cut=3, length_limit=36, verbose=False):

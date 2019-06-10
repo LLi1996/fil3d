@@ -2,14 +2,19 @@
 process GALFA slices into dicts of mask objects
 '''
 import argparse
+import logging
+import os
 import glob
 from cube_fil_finder.galfa import preprocess_cube
 from cube_fil_finder.galfa import galfa_const
+from cube_fil_finder.util import util
 import datetime
 
 SLICE_COMMON_NAME = 'GALFA_HI_W_S'
 
 V_INDEX_RANGE = galfa_const.GALFA_SELECT_V_SLICES_RANGE
+
+DEFAULT_DIR = '../data/unprocessed_slices_from_susan/'
 
 
 def main():
@@ -36,34 +41,34 @@ def main():
                         help="radius for umask")
     parser.add_argument('-v', '--verbose', action='store_true',
                         help="increase output verbosity")
+    parser.add_argument('--logging_level', default='INFO',
+                        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'])
     args = parser.parse_args()
 
-    file_dir = args.directory if args.directory else '../data/unprocessed_slices_from_susan/'
+    util.basic_logging_setup(level=args.logging_level)
 
-    if file_dir[-1] != '/':
-        file_dir += '/'
-    print(args)
+    file_dir = os.path.abspath(args.directory) if args.directory else DEFAULT_DIR
 
     X_INDEX_RANGE = [args.x_start, args.x_end]
     Y_INDEX_RANGE = [args.y_start, args.y_end]
 
-    print('Starting multislice process')
+    logging.info('x index range: {0}, y index range {1}'.format(X_INDEX_RANGE, Y_INDEX_RANGE))
+
+    logging.info('Starting multislice process')
 
     file_name = file_dir + SLICE_COMMON_NAME
 
     for v in xrange(args.start, args.end + 1):
-        print('\ton slice {0}, {1}'.format(v, datetime.datetime.now()))
+        logging.info('on slice {0}'.format(v))
 
         if v // 100 < 10:
             glob_file_name = file_name + '0' + str(v) + '*'
         else:
             glob_file_name = file_name + str(v) + '*'
 
-        if args.verbose:
-            print "\t searching for: {}".format(glob_file_name)
+        logging.debug("searching for: {}".format(glob_file_name))
         true_file_name = glob.glob(glob_file_name)[0]
-        if args.verbose:
-            print "\t found: {}".format(true_file_name)
+        logging.debug("found: {}".format(true_file_name))
 
         true_file_name = true_file_name.split('/')[-1]
 

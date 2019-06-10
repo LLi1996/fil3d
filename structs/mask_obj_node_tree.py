@@ -88,8 +88,7 @@ class MaskObjNodeTree:
 
 
 def newTreeFromNode(node, mark_as_visited=True, verbose=False):
-    if verbose:
-        print "\tnew tree!"
+    logging.info('constructing new tree from node')
     if mark_as_visited:
         node.visited = True
 
