@@ -99,6 +99,7 @@ def add_tree_to_dict(tree, dictionary):
         key = tree_key_hash(key)
 
     dictionary[key] = tree
+    return key
 
 
 def remove_tree_from_dict(tree_key, dictionary):

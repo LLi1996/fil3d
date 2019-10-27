@@ -128,7 +128,12 @@ def match_and_add_node_onto_tree(node, v_index, trees, overlap_thresh, continuou
     if has_matched:
         logging.info("found {0} matches in total".format(matches))
         if matches > 1:
-            back_merge_trees(trees, matched_tree_keys)
+            new_key = back_merge_trees(trees, matched_tree_keys)
+            if continuous_tree_keys_set is not None:
+                # updates the set by removing the old keys and adding the new key back
+                for old_key in matched_tree_keys:
+                    continuous_tree_keys_set.discard(old_key)
+                continuous_tree_keys_set.add(new_key)
 
     else:
         logging.info("no match found -- searched through tree dict")
@@ -145,9 +150,11 @@ def back_merge_trees(trees, tree_keys_to_back_merge):
     """
     if len(tree_keys_to_back_merge) < 2:
         raise RuntimeError('tree_keys_to_back_merge needs at least two keys')
+    logging.info('back merging trees: {0}'.format(tree_keys_to_back_merge))
 
     base_tree = struct_util.remove_tree_from_dict(tree_keys_to_back_merge[0], trees)
-    for k in range(1, len(tree_keys_to_back_merge)):
+    for i in range(1, len(tree_keys_to_back_merge)):
+        k = tree_keys_to_back_merge[i]
         # iteratively back merge the "other tree" into the "base tree"
         other_tree = struct_util.remove_tree_from_dict(k, trees)
         # merge trees
@@ -155,7 +162,9 @@ def back_merge_trees(trees, tree_keys_to_back_merge):
 
 
     # add the back-merged tree back in
-    struct_util.add_tree_to_dict(base_tree, trees)
+    key = struct_util.add_tree_to_dict(base_tree, trees)
+    logging.info('new key for the back-merged tree: {0}'.format(key))
+    return key
 
 
 def end_noncontinuous_trees(trees, current_v):
