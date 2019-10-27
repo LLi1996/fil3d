@@ -78,6 +78,7 @@ def match_and_add_node_onto_tree(node, v_index, trees, overlap_thresh, continuou
     """
     has_matched = False
     matches = 0
+    matched_tree_keys = []
 
     logging.debug("matching node to trees ...")
 
@@ -94,41 +95,67 @@ def match_and_add_node_onto_tree(node, v_index, trees, overlap_thresh, continuou
             keys = set(trees.keys())
 
         for k in struct_util.sorted_struct_dict_keys_by_area(keys, key_type='tree'):
-            tree = trees[k]
-            if tree.has_ended:
+            candidate_tree = trees[k]
+            if candidate_tree.has_ended:
                 continue
             else:
                 # match and add node, if not matched continue
-                last_node_on_tree = tree.getLastNode()
-                tree_has_node_on_current_v_slice = last_node_on_tree.v_slice_index[0] == v_index
-                if tree_has_node_on_current_v_slice:
+                last_node_on_candidate_tree = candidate_tree.getLastNode()
+                candidate_tree_has_node_on_current_v_slice = last_node_on_candidate_tree.v_slice_index[0] == v_index
+                if candidate_tree_has_node_on_current_v_slice:
                     # the tree has already been matched with a node on this velocity channel
-                    # in this case the last_node_on_tree isn't the node we want to match to (since that'll be on the
+                    # in this case the last_node_on_candidate_tree isn't the node we want to match to (since that'll be on the
                     # current velocity slice, and we want to match to the node that was before that
-                    node_to_match_to = tree.getNode(tree.length - 2)
+                    candidate_node = candidate_tree.getNode(candidate_tree.length - 2)
                 else:
-                    # if not then we just match to the last_node_on_tree
-                    node_to_match_to = last_node_on_tree
+                    # if not then we just match to the last_node_on_candidate_tree
+                    candidate_node = last_node_on_candidate_tree
 
-                if node_to_match_to.checkMaskOverlap(node, overlap_thresh):
+                if candidate_node.checkMaskOverlap(node, overlap_thresh):
                     node.visited = True
                     has_matched = True
                     matches += 1
-                    if tree_has_node_on_current_v_slice:
-                        tree.addNodeOnSameVChannel(node)
+                    if candidate_tree_has_node_on_current_v_slice:
+                        candidate_tree.addNodeOnSameVChannel(node)
                     else:
-                        tree.addNodeOnNewVChannel(node)
+                        candidate_tree.addNodeOnNewVChannel(node)
 
                     logging.info("match found -- tree key: {0}".format(k))
+                    matched_tree_keys.append(k)
                 else:
                     continue
 
     if has_matched:
         logging.info("found {0} matches in total".format(matches))
+        if matches > 1:
+            back_merge_trees(trees, matched_tree_keys)
+
     else:
         logging.info("no match found -- searched through tree dict")
 
     return has_matched
+
+
+def back_merge_trees(trees, tree_keys_to_back_merge):
+    """
+
+    :param trees:
+    :param tree_keys_to_back_merge:
+    :return:
+    """
+    if len(tree_keys_to_back_merge) < 2:
+        raise RuntimeError('tree_keys_to_back_merge needs at least two keys')
+
+    base_tree = struct_util.remove_tree_from_dict(tree_keys_to_back_merge[0], trees)
+    for k in range(1, len(tree_keys_to_back_merge)):
+        # iteratively back merge the "other tree" into the "base tree"
+        other_tree = struct_util.remove_tree_from_dict(k, trees)
+        # merge trees
+        base_tree = maskTree.back_merge_trees(base_tree, other_tree)
+
+
+    # add the back-merged tree back in
+    struct_util.add_tree_to_dict(base_tree, trees)
 
 
 def end_noncontinuous_trees(trees, current_v):
