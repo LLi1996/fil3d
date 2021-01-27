@@ -150,6 +150,7 @@ def back_merge_trees(trees, tree_keys_to_back_merge):
     """
     if len(tree_keys_to_back_merge) < 2:
         raise RuntimeError('tree_keys_to_back_merge needs at least two keys')
+
     logging.info('back merging trees: {0}'.format(tree_keys_to_back_merge))
 
     base_tree = struct_util.remove_tree_from_dict(tree_keys_to_back_merge[0], trees)
