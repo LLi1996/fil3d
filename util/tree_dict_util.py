@@ -153,17 +153,15 @@ def back_merge_trees(trees, tree_keys_to_back_merge):
 
     logging.info('back merging trees: {0}'.format(tree_keys_to_back_merge))
 
-    base_tree = struct_util.remove_tree_from_dict(tree_keys_to_back_merge[0], trees)
-    for i in range(1, len(tree_keys_to_back_merge)):
-        k = tree_keys_to_back_merge[i]
-        # iteratively back merge the "other tree" into the "base tree"
-        other_tree = struct_util.remove_tree_from_dict(k, trees)
-        # merge trees
-        base_tree = maskTree.back_merge_trees(base_tree, other_tree)
-
+    # this is the base tree that we'll merge onto
+    tree = struct_util.pop_tree_from_dict(tree_keys_to_back_merge[0], trees)
+    for i, k in enumerate(tree_keys_to_back_merge):
+        if i != 0:  # iteratively back merge the other trees into the base tree
+            other_tree = struct_util.pop_tree_from_dict(k, trees)
+            tree = maskTree.back_merge_trees(tree, other_tree)
 
     # add the back-merged tree back in
-    key = struct_util.add_tree_to_dict(base_tree, trees)
+    key = struct_util.add_tree_to_dict(tree, trees)
     logging.info('new key for the back-merged tree: {0}'.format(key))
     return key
 

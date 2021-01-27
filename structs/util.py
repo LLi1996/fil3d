@@ -6,6 +6,7 @@ sorting function based on the hashed names
 
 LL2017
 """
+import logging
 
 
 def node_key_hash(original_key):
@@ -102,17 +103,22 @@ def add_tree_to_dict(tree, dictionary):
     return key
 
 
-def remove_tree_from_dict(tree_key, dictionary):
+def pop_tree_from_dict(tree_key, dictionary):
     """
-    remove a tree from the dictionary
+    pop a tree from the dictionary
+
     :param tree_key:
+
     :param dictionary:
+
     :return:
     """
     if tree_key in dictionary:
+        logging.debug('removing tree {0} from the dictionary of trees'.format(tree_key))
         return dictionary.pop(tree_key)
     else:
         raise KeyError('{0} not a valid tree key'.format(tree_key))
+
 
 def sorted_struct_dict_keys_by_area(dict_keys, key_type, descending=True):
     """Sort struct dict keys by masked area size
