@@ -168,10 +168,19 @@ def back_merge_trees(trees, tree_keys_to_back_merge):
 
 def end_noncontinuous_trees(trees, current_v):
     """
-    ends the trees that have not matched in this velocity slice
-    Arguments:
-        trees {dict} -- of trees
-        current_v {int} -- the velocity slice that just finished matching
+    Will
+    1) Ends the trees that have not matched in this velocity slice &
+    2) returns the set of tree keys that are still continuous
+
+    Trees will be modified in place.
+
+    :param trees: {dict}
+        of trees
+
+    :param current_v: {int}
+        the velocity slice that just finished matching
+
+    :return: {Set[str]}
     """
     logging.info('ending trees that are non-continuous ...')
     continuous_trees = set()
@@ -188,7 +197,8 @@ def end_noncontinuous_trees(trees, current_v):
 # size_cutoff was 2500
 def delete_short_dead_trees(trees, length_cutoff=1, size_cutoff=None, verbose=False):
     """
-    delete all the trees that have length = 1 and have ended
+    Delete all the trees that have length = 1 and have ended
+
     Arguments:
         tree_dict {dict} -- of trees
     """
