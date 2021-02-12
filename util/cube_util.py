@@ -6,8 +6,10 @@ LL2017
 """
 from astropy.coordinates import SkyCoord as coord
 from astropy.io import fits
+import logging
 import math
 import numpy as np
+import os
 import scipy.ndimage
 
 
@@ -37,8 +39,7 @@ def umask(data, radius=15, filter_opt='tophat', smr_mask=None, verbose=False):
     assert data.ndim == 2
 
     if filter_opt == 'tophat':
-        if verbose:
-            print "doing tophat umask filter"
+        logging.debug("doing tophat umask filter")
         kernel = circ_kern(2 * radius + 1)
         outdata = scipy.ndimage.filters.correlate(data, kernel)
 
@@ -48,8 +49,7 @@ def umask(data, radius=15, filter_opt='tophat', smr_mask=None, verbose=False):
         fin_out_data = data - outdata / kernweight
 
     elif filter_opt == 'gaussian':
-        if verbose:
-            print "doing gaussian umask filter"
+        logging.debug("doing gaussian umask filter")
         # we want the FWHM to = radius so we do the FWHM = 2(2ln2)^.5 sigma conversion
         sigma = float(radius) / (8 * math.log(2)) ** 0.5
         if verbose:
@@ -135,8 +135,12 @@ def umask_and_save(data, hdr, save_dir, file_name, radius=None, umask_filter=Non
     """
     unsharp masking a data slice and saving it
     """
-    save_path = save_dir + file_name.rsplit('.', 1)[0] + '_umask.fits'
+    save_path = os.path.join(save_dir, file_name.rsplit('.', 1)[0] + '_umask.fits')
+
+    logging.info('applying un-sharp masking ...')
     umask_data = umask(data, radius, umask_filter)
+
+    logging.info('saving un-sharp masked data to {0} ...'.format(save_path))
     fits.writeto(save_path, umask_data, header=hdr)
 
     return umask_data

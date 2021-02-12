@@ -1,3 +1,4 @@
+import logging
 import copy
 import numpy as np
 
@@ -22,24 +23,58 @@ class MaskObjNodeTree:
 
         self.has_ended = False
 
-    def addNode(self, new_node, new_channel=True, verbose=False):
-        if verbose:
-            print "Adding node to root"
-            print "Old corners: " + str(self.root_node.corners)
-            print "New node's corners: " + str(new_node.corners)
+    def addNodeOnNewVChannel(self, new_node, verbose=False):
+        """
+        the "standard" procedure of adding a node to a tree, we:
+            1) merge the node into the tree root node (to capture the overall "shadow" of the tree)
+            2) append the node to the list of nodes on the tree
 
+        :param new_node:
+        :param verbose:
+        :return:
+        """
+        logging.debug("Adding node to tree (new velocity channel)")
+        logging.debug("New node's corners: " + str(new_node.corners))
+
+        logging.debug("Old root node corners: " + str(self.root_node.corners))
+
+        # merging the new node into the root_node
         self.root_node.mergeNode(new_node)
-        self.node_list.append(new_node)
-        if new_channel:
-            self.length += 1
 
-        if hasattr(self.root_node, 'corners_original'):
-            self.root_node.corners_original = [[self.root_node.corner_BL[1], self.root_node.corner_BL[0]],
-                                               [self.root_node.corner_TR[1], self.root_node.corner_TR[0]]]
+        # adding the new node to the list of nodes
+        self.node_list.append(copy.deepcopy(new_node))
+        self.length += 1
 
-        if verbose:
-            print "New corners: " + str(self.root_node.corners)
+        logging.debug("New root node corners: " + str(self.root_node.corners))
+
         return self.length
+
+    def addNodeOnSameVChannel(self, new_node):
+        """
+        the "special" procedure of adding a node to a tree when the tree already has a node on that velocity channel, we:
+            1) merge the node into the tree root node (to capture the overall "shadow of the tree)
+            2) merge the node to the last node in the list of nodes on the tree (with the assumption that the new node
+            and the last node are on the same velocity channel)
+        this is so that the node at index i of the node list is representative of all the nodes that belong to this tree
+        on velocity channel x - tree starting velocity channel + i
+
+        :param new_node:
+        :return:
+        """
+        logging.debug("Adding node to tree (same velocity channel)")
+        logging.debug("New node's corners: " + str(new_node.corners))
+
+        logging.debug("Old root node corners: " + str(self.root_node.corners))
+        # merging the new node into the root_node
+        self.root_node.mergeNode(new_node)
+
+        # merging the new node into the last node so len(self.node_list) == self.length
+        self.getLastNode().mergeNode(new_node)
+
+        logging.debug("New root node corners: " + str(self.root_node.corners))
+
+        return self.length
+
 
     def getNode(self, node_number):
         return self.node_list[node_number]
@@ -73,11 +108,38 @@ class MaskObjNodeTree:
 
 
 def newTreeFromNode(node, mark_as_visited=True, verbose=False):
-    if verbose:
-        print "\tnew tree!"
+    logging.info('constructing new tree from node')
     if mark_as_visited:
         node.visited = True
 
     new_tree = MaskObjNodeTree(node)
 
     return new_tree
+
+
+def back_merge_trees(base_tree, other_tree):
+    """
+
+    :param base_tree:
+    :param other_tree:
+    :return:
+    """
+    # assuming that the base tree and the other tree are on the same "latest" velocity channel
+    if base_tree.length < other_tree.length:
+        # this is the "flipped" back merge configuration
+        temp = base_tree
+        base_tree = other_tree
+        other_tree = temp
+
+    v_channel_diff = base_tree.length - other_tree.length
+    merged_tree = newTreeFromNode(base_tree.getNode(0))
+    for base_tree_node_index in range(base_tree.length):
+        if base_tree_node_index != 0:
+            # skipping the 0 case cause we already initiated the meged_tree from the base_tree 0th node
+            merged_tree.addNodeOnNewVChannel(base_tree.getNode(base_tree_node_index))
+
+        other_tree_node_index = base_tree_node_index - v_channel_diff
+        if other_tree_node_index >= 0:
+            merged_tree.addNodeOnSameVChannel(other_tree.getNode(other_tree_node_index))
+
+    return merged_tree

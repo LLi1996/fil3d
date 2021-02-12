@@ -95,25 +95,29 @@ def cut_galfa_slice_from_node(data_slice, node):
 
 
 def cut_galfa_slice_from_corners(data_slice, corners):
-    """cut out a data slice from the original slice and box corners
-    Arguments:
-        data_slice {2d np.array} -- of data shape(m, n) "y-x"
-        corners {list of list} -- [[xmin, ymin], [xmax, ymax]]
-    Return:
-        cut_data_slice {2d np.array}
+    """
+    cut out a data slice from the original slice and box corners
+
+    :param data_slice: {2d np.array}
+        of data shape(m, n) "y-x"
+
+    :param corners: {list of list}
+        [[ymin, xmin], [ymax, xmax]]
+
+    :return: cut_data_slice {2d np.array}
     """
     cut_corners = copy.deepcopy(corners)
     if cut_corners[0][0] == -1:
         cut_corners[0][0] = 0
-    elif cut_corners[1][0] == galfa_const.GALFA_X_STEPS:
-        cut_corners[1][0] = galfa_const.GALFA_X_STEPS - 1
+    elif cut_corners[1][0] == galfa_const.GALFA_Y_STEPS:
+        cut_corners[1][0] = galfa_const.GALFA_Y_STEPS - 1
 
     if cut_corners[0][1] == -1:
         cut_corners[0][1] = 0
-    elif cut_corners[1][1] == galfa_const.GALFA_Y_STEPS:
-        cut_corners[1][1] = galfa_const.GALFA_Y_STEPS - 1
+    elif cut_corners[1][1] == galfa_const.GALFA_X_STEPS:
+        cut_corners[1][1] = galfa_const.GALFA_X_STEPS - 1
 
-    cut_data_slice = data_slice[cut_corners[0][1]:cut_corners[1][1], cut_corners[0][0]:cut_corners[1][0]]
+    cut_data_slice = data_slice[cut_corners[0][0]:cut_corners[1][0], cut_corners[0][1]:cut_corners[1][1]]
     return cut_data_slice
 
 

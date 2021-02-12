@@ -130,8 +130,8 @@ def get_node_mask_orientation_info(node):
         x_bar, y_bar, theta_1, theta_2, roundness
     """
     x_bar, y_bar, theta_1, theta_2, roundness = get_mask_orientation_info(node.mask)
-    x_bar = x_bar + node.corner_BL[0]
-    y_bar = y_bar + node.corner_BL[1]
+    y_bar = y_bar + node.corner_min[0]
+    x_bar = x_bar + node.corner_min[1]
     return x_bar, y_bar, theta_1, theta_2, roundness
 
 
