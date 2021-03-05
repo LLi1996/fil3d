@@ -1,5 +1,5 @@
-3D filament mask containers (MaskNodeTrees)
-===========================================
+3D filament containers (MaskNodeTrees)
+======================================
 
 .. toctree::
 

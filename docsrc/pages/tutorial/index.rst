@@ -6,6 +6,6 @@ Tutorial
    :caption: Contents:
 
 
-   2D filament masks containers (MaskNodes) <masknodes.rst>
-   3D filment mask containers (MaskNodeTrees) <masknodetrees.rst>
+   2D filament mask containers (MaskNodes) <masknodes.rst>
+   3D filament containers (MaskNodeTrees) <masknodetrees.rst>
    Going from 2D to 3D <buildingtrees.rst>
