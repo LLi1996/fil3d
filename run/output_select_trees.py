@@ -6,8 +6,8 @@ LL2017
 
 import pickle
 import argparse
-from cube_fil_finder.vis import tree_vis as vis
-from cube_fil_finder.util import moments as moments
+from fil3d.vis import tree_vis as vis
+from fil3d.util import moments as moments
 
 
 def main():

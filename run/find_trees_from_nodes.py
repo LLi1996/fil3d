@@ -8,8 +8,8 @@ import glob
 import os
 import logging
 from astropy.io import fits
-from cube_fil_finder.util import util, tree_dict_util
-from cube_fil_finder.galfa import galfa_const
+from fil3d.util import util, tree_dict_util
+from fil3d.galfa import galfa_const
 
 DEFAULT_DATA_DIR = '../../pickled_dicts/full_sky_gaussian_30_1.0/'
 DEFAULT_SAVE_DIR = '../../pickled_dicts/fourth_batch/'

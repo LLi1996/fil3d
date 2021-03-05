@@ -5,9 +5,9 @@ import argparse
 import logging
 import os
 import glob
-from cube_fil_finder.galfa import preprocess_cube
-from cube_fil_finder.galfa import galfa_const
-from cube_fil_finder.util import util
+from fil3d.galfa import preprocess_cube
+from fil3d.galfa import galfa_const
+from fil3d.util import util
 import datetime
 
 SLICE_COMMON_NAME = 'GALFA_HI_W_S'
