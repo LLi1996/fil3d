@@ -1,35 +1,47 @@
 import logging
+
 import numpy as np
 
-from fil3d.util import cube_util
 from fil3d.galfa import galfa_const
+from fil3d.util import cube_util
 
 
-class MaskObjNode:
+class MaskObjNode(object):
     """
-    This node object is made to contain the masks produced by fil_finder.
-    Each node takes in a mask(square), the corners of the mask, and the v
-    index, other fields are then calculted.
+    The MaskObjNode class is made to contain a single mask and its corners.
+    The mask and corner can be produced by FilFinder or any other filament finding code. You can also manually input
+    masks and corners .
 
-    It is important to note the differnce between the area of a mask and the
-    masked area: since the masks are aways squares, the area of a mask is just
-    calculated from dimentions of the corners. The masked area, however, is
+    Each instance takes in:
+    1) a mask (2d np bit array)
+    2) the corners of the mask indicating where the mask is located
+    3) the index of the velocity channel where the mask is located
+
+    It is important to note the difference between the area of a mask and the
+    masked area: since the masks are always rectangles, the area of a mask is just
+    calculated from dimensions of the corners. The masked area, however, is
     calculated by counting the amount of pixels that's masked (marked TRUE in
     the np array).
     """
 
     def __init__(self, mask_obj, corners, v_slice_index):
         """
-        Arguments:
-            mask_obj {2d np.array of bool} -- mask (passed from filfind)
-            corners {2d list} -- corners of mask (passed from filfind)
-            v_slice_index {int} -- GALFA v_index of node
+        :param mask_obj: {np.array}
+            2D bit mask.
+
+        :param corners: {List[List, List]}
+            Corners of mask. In [(top left)[i,j],(bottom right)[i,j]] format when (0, 0) is at top left. This usually
+            translates to [[y0, x0], [y1, x1]] in np indexing.
+
+        :param v_slice_index: {int}
+            Index of the velocity channel.
+
         """
 
         self.mask = mask_obj
         corners = fix_boarder_corners(self.mask, corners)
 
-        # corners are [(topleft)[i,j],(bottom right)[i,j]]
+        # corners are [(top left)[i,j],(bottom right)[i,j]]
         # organize corners into list of lists instead of list of tups and convert into [x,y]
         self.corners_original = corners
         self.corners = self.corners_original  # legacy
@@ -47,19 +59,23 @@ class MaskObjNode:
         self.mask_size = self.checkAreaSize()
         self.masked_area_size = self.checkMaskedAreaSize()
 
-    def mergeNode(self, other_node):
+    def merge_node(self, other_node):
         """
-        Merge other_node with self. Append to self.v_slice_index if needed and
-        create the combined OR mask of self.mask and other_node.mask. The
-        combined or mask is set as the new self.mask and other attributes are
-        fixed
+        Merge other_node with self.
+        Append to self.v_slice_index if needed and create the combined OR mask of self.mask and other_node.mask.
+        The combined or mask is set as the new self.mask and other attributes are fixed.
+
+        :param other_node: {MaskObjNode}
+
+        :return: {bool}
+            True
         """
         if self.v_slice_index[-1] != other_node.v_slice_index[0]:
             self.v_slice_index.append(other_node.v_slice_index[0])
 
         if self.checkCornersOverlap(other_node) == False:
-            logging.warn('corners don\'t overlap!' \
-                         + '(fine if using mergeNode() to consolidate two nodes on the same velocity channel)')
+            logging.warning('corners don\'t overlap!' \
+                            + '(fine if using mergeNode() to consolidate two nodes on the same velocity channel)')
 
         combined_or_mask = self.combineMask(other_node, merge_type='OR')
         combined_masked_area_size = self.checkMaskedAreaSize(combined_or_mask)
@@ -75,15 +91,24 @@ class MaskObjNode:
 
         return True
 
-    def checkMaskOverlap(self, other_node, overlap_thresh):
+    def mergeNode(self, other_node):
+        return self.merge_node(other_node)
+
+    def check_mask_overlap(self, other_node, overlap_thresh):
         """
-        First check if the coners of self.mask and other_node.mask overlap, if
-        the coners do overlap (meaning some part of the two squares overlap) we
-        then check if actual masks overlap. To check for actual overlaps a
-        combined AND mask is first made, and the masked area calculated. The
-        masked area of the combined AND mask is then compared to the masked
-        area of the imput masks. If the overlap is greater than overlap_thresh
-        (# of pixels) then return True
+        First check if the corners of self.mask and other_node.mask overlap.
+        If the corners do overlap (meaning some part of the two squares overlap) we then check if actual masks overlap.
+        To check for actual overlap, a combined AND mask is first made, and the masked area calculated.
+        The masked area of the combined AND mask is then compared to the masked area of the input masks.
+
+        :param other_node: {MaskObjNode}
+
+        :param overlap_thresh: {float}
+
+        :return: {bool}
+            True if the the overlap between the combined AND mask and _either_ of the masks is greater than
+            overlap_thresh.
+
         """
         if self.checkCornersOverlap(other_node) == False:
             return False
@@ -97,6 +122,9 @@ class MaskObjNode:
             return True
         else:
             return False
+
+    def checkMaskOverlap(self, other_node, overlap_thresh):
+        return self.check_mask_overlap(other_node=other_node, overlap_thresh=overlap_thresh)
 
     def combineMask(self, other_node, merge_type='AND'):
         """
@@ -187,7 +215,6 @@ class MaskObjNode:
         j_pad_after = new_corners[1][1] - old_corners[1][1]
         return np.pad(mask, ((i_pad_before, i_pad_after), (j_pad_before, j_pad_after)), 'constant', constant_values=0)
 
-
     def checkAreaSize(self, corners=None):
         """
         Calculate the area of self.mask by looking at its dimentions from its
@@ -245,7 +272,6 @@ def check_node_b_cutoff(node, hdr, b_cutoff=30):
     """
     ys = [node.corner_min[0], node.corner_max[0]]
     xs = [node.corner_min[1], node.corner_max[1]]
-
 
     ras, decs = cube_util.index_to_radec(xs, ys, hdr)
     ls, bs = cube_util.radecs_to_lb(ras, decs)

@@ -39,7 +39,7 @@ class MaskObjNodeTree:
         logging.debug("Old root node corners: " + str(self.root_node.corners))
 
         # merging the new node into the root_node
-        self.root_node.mergeNode(new_node)
+        self.root_node.merge_node(new_node)
 
         # adding the new node to the list of nodes
         self.node_list.append(copy.deepcopy(new_node))
@@ -66,7 +66,7 @@ class MaskObjNodeTree:
 
         logging.debug("Old root node corners: " + str(self.root_node.corners))
         # merging the new node into the root_node
-        self.root_node.mergeNode(new_node)
+        self.root_node.merge_node(new_node)
 
         # merging the new node into the last node so len(self.node_list) == self.length
         self.getLastNode().mergeNode(new_node)

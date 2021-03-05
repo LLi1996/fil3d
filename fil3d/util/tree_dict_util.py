@@ -111,7 +111,7 @@ def match_and_add_node_onto_tree(node, v_index, trees, overlap_thresh, continuou
                     # if not then we just match to the last_node_on_candidate_tree
                     candidate_node = last_node_on_candidate_tree
 
-                if candidate_node.checkMaskOverlap(node, overlap_thresh):
+                if candidate_node.check_mask_overlap(node, overlap_thresh):
                     node.visited = True
                     has_matched = True
                     matches += 1
