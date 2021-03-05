@@ -1,4 +1,3 @@
-*GALFA_Filfinder*
+# Fil3D
 
-Using FilFinder to find filaments in the GALFA survey
-
+Docs: https://lli1996.github.io/fil3d/
