@@ -1,0 +1,308 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>2D filament mask containers (MaskNodes) &#8212; Fil3D  documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="3D filament mask containers (MaskNodeTrees)" href="masknodetrees.html" />
+    <link rel="prev" title="Tutorial" href="index.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="d-filament-mask-containers-masknodes">
+<h1>2D filament mask containers (MaskNodes)<a class="headerlink" href="#d-filament-mask-containers-masknodes" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+<p>To use, do:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">fil3d</span> <span class="kn">import</span> <span class="n">MaskObjNode</span>
+
+<span class="n">node</span> <span class="o">=</span> <span class="n">MaskObjNode</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">corners</span><span class="p">,</span> <span class="n">v_channel</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="py class">
+<dt id="fil3d.structs.MaskObjNode">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">fil3d.structs.</span></code><code class="sig-name descname"><span class="pre">MaskObjNode</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mask_obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">corners</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v_slice_index</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fil3d.structs.MaskObjNode" title="Permalink to this definition">¶</a></dt>
+<dd><p>The MaskObjNode class is made to contain a single mask and its corners.
+The mask and corner can be produced by FilFinder or any other filament finding code. You can also manually input
+masks and corners .</p>
+<dl class="simple">
+<dt>Each instance takes in:</dt><dd><ol class="arabic simple">
+<li><p>a mask (2d np bit array)</p></li>
+<li><p>the corners of the mask indicating where the mask is located</p></li>
+<li><p>the index of the velocity channel where the mask is located</p></li>
+</ol>
+</dd>
+</dl>
+<p>It is important to note the difference between the area of a mask and the
+masked area: since the masks are always rectangles, the area of a mask is just
+calculated from dimensions of the corners. The masked area, however, is
+calculated by counting the amount of pixels that’s masked (marked TRUE in
+the np array).</p>
+<dl class="py method">
+<dt id="fil3d.structs.MaskObjNode.__init__">
+<code class="sig-name descname"><span class="pre">__init__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mask_obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">corners</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v_slice_index</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fil3d.structs.MaskObjNode.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mask_obj</strong> – {np.array}
+2D bit mask.</p></li>
+<li><p><strong>corners</strong> – {List[List, List]}
+Corners of mask. In [(top left)[i,j],(bottom right)[i,j]] format when (0, 0) is at top left. This usually
+translates to [[y0, x0], [y1, x1]] in np indexing.</p></li>
+<li><p><strong>v_slice_index</strong> – {int}
+Index of the velocity channel.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fil3d.structs.MaskObjNode.checkAreaSize">
+<code class="sig-name descname"><span class="pre">checkAreaSize</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">corners</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fil3d.structs.MaskObjNode.checkAreaSize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the area of self.mask by looking at its dimentions from its
+corners. If corners are provided then an area based on that corner is
+calculated.
+:keyword corners {MaskObjNode.corners} – corners (default: {None})</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>int – the area of the mask (in pixels^2)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fil3d.structs.MaskObjNode.checkCornersOverlap">
+<code class="sig-name descname"><span class="pre">checkCornersOverlap</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other_node</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fil3d.structs.MaskObjNode.checkCornersOverlap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if self.mask and other_node.mask have any overlap
+:param other_node {MaskObjNode} – other node:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>bool – true if overlap</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fil3d.structs.MaskObjNode.checkMaskOverlap">
+<code class="sig-name descname"><span class="pre">checkMaskOverlap</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other_node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overlap_thresh</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fil3d.structs.MaskObjNode.checkMaskOverlap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for check_mask_overlap()</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fil3d.structs.MaskObjNode.checkMaskedAreaSize">
+<code class="sig-name descname"><span class="pre">checkMaskedAreaSize</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fil3d.structs.MaskObjNode.checkMaskedAreaSize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the amount of pixels that are masked by self.mask. If a new
+mask is provided then that mask is used
+:keyword mask {2d np.array of bool} – mask:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>int – # of pixels masked (as opposed to the area of the mask)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fil3d.structs.MaskObjNode.check_mask_overlap">
+<code class="sig-name descname"><span class="pre">check_mask_overlap</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other_node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overlap_thresh</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fil3d.structs.MaskObjNode.check_mask_overlap" title="Permalink to this definition">¶</a></dt>
+<dd><p>First check if the corners of self.mask and other_node.mask overlap.
+If the corners do overlap (meaning some part of the two squares overlap) we then check if actual masks overlap.
+To check for actual overlap, a combined AND mask is first made, and the masked area calculated.
+The masked area of the combined AND mask is then compared to the masked area of the input masks.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>other_node</strong> – {MaskObjNode}</p></li>
+<li><p><strong>overlap_thresh</strong> – {float}</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>{bool}
+True if the the overlap between the combined AND mask and _either_ of the masks is greater than
+overlap_thresh.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fil3d.structs.MaskObjNode.combineMask">
+<code class="sig-name descname"><span class="pre">combineMask</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other_node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">merge_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'AND'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fil3d.structs.MaskObjNode.combineMask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Merge self.mask and other_node.mask. The corners of the 2 masks are
+first matched to fined the smallest square that contains both masks,
+a new mask is then made to that dimention. Elements of the new mask are
+filled basked on the merge_type (‘AND’ or ‘OR’).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>the new combined mask</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fil3d.structs.MaskObjNode.expandMask">
+<code class="sig-name descname"><span class="pre">expandMask</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_corners</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fil3d.structs.MaskObjNode.expandMask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Expand self.mask so its corners match the new_corners provided. Masks
+are paded with 0s with the numpy function pad()
+:param new_corners {MaskObjNode.corners} – new corners:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>new expanded mask</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fil3d.structs.MaskObjNode.getAR">
+<code class="sig-name descname"><span class="pre">getAR</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#fil3d.structs.MaskObjNode.getAR" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the aspect ratio of the mask
+:returns: float – aspect ratio</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fil3d.structs.MaskObjNode.getDimentions">
+<code class="sig-name descname"><span class="pre">getDimentions</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#fil3d.structs.MaskObjNode.getDimentions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the pixel dimentions of the mask
+:returns: int, int – width, height</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fil3d.structs.MaskObjNode.matchCorners">
+<code class="sig-name descname"><span class="pre">matchCorners</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other_node</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fil3d.structs.MaskObjNode.matchCorners" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compare the self.mask and other_node.mask and pick out the smallest
+square that contain both masks.
+:param other_node {MaskObjNode} – other node:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>corners – the corners of that square.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fil3d.structs.MaskObjNode.mergeNode">
+<code class="sig-name descname"><span class="pre">mergeNode</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other_node</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fil3d.structs.MaskObjNode.mergeNode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for merge_node()</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fil3d.structs.MaskObjNode.merge_node">
+<code class="sig-name descname"><span class="pre">merge_node</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other_node</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fil3d.structs.MaskObjNode.merge_node" title="Permalink to this definition">¶</a></dt>
+<dd><p>Merge other_node with self.
+Append to self.v_slice_index if needed and create the combined OR mask of self.mask and other_node.mask.
+The combined or mask is set as the new self.mask and other attributes are fixed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>other_node</strong> – {MaskObjNode}</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>{bool}
+True</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">Fil3D</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Tutorial</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">2D filament masks containers (MaskNodes)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="masknodetrees.html">3D filment mask containers (MaskNodeTrees)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="buildingtrees.html">Going from 2D to 3D</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Tutorial</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Tutorial</a></li>
+      <li>Next: <a href="masknodetrees.html" title="next chapter">3D filament mask containers (MaskNodeTrees)</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Larry Li.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../_sources/pages/tutorial/masknodes.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,182 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3D filament mask containers (MaskNodeTrees) &#8212; Fil3D  documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Going from 2D to 3D" href="buildingtrees.html" />
+    <link rel="prev" title="2D filament mask containers (MaskNodes)" href="masknodes.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="d-filament-mask-containers-masknodetrees">
+<h1>3D filament mask containers (MaskNodeTrees)<a class="headerlink" href="#d-filament-mask-containers-masknodetrees" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+<dl class="py class">
+<dt id="fil3d.structs.MaskObjNodeTree">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">fil3d.structs.</span></code><code class="sig-name descname"><span class="pre">MaskObjNodeTree</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_obj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fil3d.structs.MaskObjNodeTree" title="Permalink to this definition">¶</a></dt>
+<dd><p>This node_tree object is made to contain the nodes which contain masks
+produced by fil_finder.
+Each tree contains a starting node and a string of nodes which define the
+tree.</p>
+<p>The first node contains the aggregated mask and is merged with each a
+subsequent addition</p>
+<dl class="py method">
+<dt id="fil3d.structs.MaskObjNodeTree.__init__">
+<code class="sig-name descname"><span class="pre">__init__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_obj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fil3d.structs.MaskObjNodeTree.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fil3d.structs.MaskObjNodeTree.addNodeOnNewVChannel">
+<code class="sig-name descname"><span class="pre">addNodeOnNewVChannel</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fil3d.structs.MaskObjNodeTree.addNodeOnNewVChannel" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>the “standard” procedure of adding a node to a tree, we:</dt><dd><ol class="arabic simple">
+<li><p>merge the node into the tree root node (to capture the overall “shadow” of the tree)</p></li>
+<li><p>append the node to the list of nodes on the tree</p></li>
+</ol>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>new_node</strong> – </p></li>
+<li><p><strong>verbose</strong> – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fil3d.structs.MaskObjNodeTree.addNodeOnSameVChannel">
+<code class="sig-name descname"><span class="pre">addNodeOnSameVChannel</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_node</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fil3d.structs.MaskObjNodeTree.addNodeOnSameVChannel" title="Permalink to this definition">¶</a></dt>
+<dd><dl>
+<dt>the “special” procedure of adding a node to a tree when the tree already has a node on that velocity channel, we:</dt><dd><ol class="arabic simple">
+<li><p>merge the node into the tree root node (to capture the overall “shadow of the tree)</p></li>
+</ol>
+<p>2) merge the node to the last node in the list of nodes on the tree (with the assumption that the new node
+and the last node are on the same velocity channel)</p>
+</dd>
+</dl>
+<p>this is so that the node at index i of the node list is representative of all the nodes that belong to this tree
+on velocity channel x - tree starting velocity channel + i</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>new_node</strong> – </p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">Fil3D</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Tutorial</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="masknodes.html">2D filament masks containers (MaskNodes)</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">3D filment mask containers (MaskNodeTrees)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="buildingtrees.html">Going from 2D to 3D</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Tutorial</a><ul>
+      <li>Previous: <a href="masknodes.html" title="previous chapter">2D filament mask containers (MaskNodes)</a></li>
+      <li>Next: <a href="buildingtrees.html" title="next chapter">Going from 2D to 3D</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Larry Li.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../_sources/pages/tutorial/masknodetrees.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
