@@ -13,9 +13,9 @@ class MaskObjNode(object):
     masks and corners .
 
     Each instance takes in:
-    1) a mask (2d np bit array)
-    2) the corners of the mask indicating where the mask is located
-    3) the index of the velocity channel where the mask is located
+       #. a mask (2d np bit array)
+       #. the corners of the mask indicating where the mask is located
+       #. the index of the velocity channel where the mask is located
 
     It is important to note the difference between the area of a mask and the
     masked area: since the masks are always rectangles, the area of a mask is just
@@ -92,6 +92,9 @@ class MaskObjNode(object):
         return True
 
     def mergeNode(self, other_node):
+        """
+        Alias for merge_node()
+        """
         return self.merge_node(other_node)
 
     def check_mask_overlap(self, other_node, overlap_thresh):
@@ -124,6 +127,9 @@ class MaskObjNode(object):
             return False
 
     def checkMaskOverlap(self, other_node, overlap_thresh):
+        """
+        Alias for check_mask_overlap()
+        """
         return self.check_mask_overlap(other_node=other_node, overlap_thresh=overlap_thresh)
 
     def combineMask(self, other_node, merge_type='AND'):
