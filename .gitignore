@@ -8,3 +8,5 @@
 .idea/*
 
 */.ipynb_checkpoints
+
+docsrc/_build/*
