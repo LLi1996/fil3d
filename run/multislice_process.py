@@ -58,7 +58,7 @@ def main():
 
     file_name = file_dir + SLICE_COMMON_NAME
 
-    for v in xrange(args.start, args.end + 1):
+    for v in range(args.start, args.end + 1):
         logging.info('on slice {0}'.format(v))
 
         if v // 100 < 10:

@@ -41,9 +41,9 @@ def preprocess_cube_filfind_struct(file_dir, file_name, v_range, x_range, y_rang
     full_x_pixel_count = full_cube_shape[2]
 
     if verbose:
-        print "\tThere are %d velocity channels in total" % full_v_channel_count
-        print "\tThe full image is %d by %d pixels" % (full_x_pixel_count, full_y_pixel_count)
-        print "\tProcessing x=" + str(x_range) + ", y=" + str(y_range) + " in v=" + str(v_range)
+        print(f"\tThere are {full_v_channel_count} velocity channels in total")
+        print(f"\tThe full image is {full_x_pixel_count} by {full_y_pixel_count} pixels")
+        print(f"\tProcessing x={x_range}, y={y_range} in v={v_range}")
 
     # cut cube based on provided x&y dimentions
     cut_cube = full_cube[:, y_range[0]:y_range[1], x_range[0]:x_range[1]]
@@ -52,16 +52,16 @@ def preprocess_cube_filfind_struct(file_dir, file_name, v_range, x_range, y_rang
     # store masks in nodes, and all nodes in a v slice in an dict by their masked_area_size
     # store that list in dict with v as key
     nodes_by_v_slice = {}
-    for v in xrange(v_range[0], v_range[1]):
+    for v in range(v_range[0], v_range[1]):
         v_slice = cut_cube[v, :, :]
         nodes_in_slice = {}
         if verbose:
-            print "\n\tworking on velocity slice %d" % v
+            print(f"\n\tworking on velocity slice {v}")
 
         nodes_in_slice = process_dataslice_filfind_struct(v_slice, hdr, v, verbose_process=verbose_process)
 
         if len(nodes_in_slice) == 0:
-            print "\n\tNO objects in slice %d" % v
+            print((f"\n\tNO objects in slice {v}"))
 
         # put that dict of mask_obj_nodes into a dict with v as key
         nodes_by_v_slice[v] = nodes_in_slice
@@ -73,7 +73,7 @@ def preprocess_cube_filfind_struct(file_dir, file_name, v_range, x_range, y_rang
         save_path = save_dir + save_name
 
         if verbose:
-            print "saving struct at " + save_path
+            print(f"saving struct at {save_path}")
 
         pickle.dump(nodes_by_v_slice, open(save_path, 'wb'))
         return save_path

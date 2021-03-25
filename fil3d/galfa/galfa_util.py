@@ -184,7 +184,7 @@ def galfa_index_to_radecs(xs, ys, verbose=True):
 
     if xs.size != ys.size:
         if verbose:
-            print "\t x & y array sizes different in conversion to RA-DEC"
+            print("\t x & y array sizes different in conversion to RA-DEC")
 
     ras = (xs - hdr['CRPIX1']) * hdr['CDELT1'] + hdr['CRVAL1']
     decs = (ys - hdr['CRPIX2']) * hdr['CDELT2'] + hdr['CRVAL2']

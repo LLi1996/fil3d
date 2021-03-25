@@ -154,7 +154,7 @@ def vis_trees_sky_dist(trees, trees_name, vis_galactic_lines=True,
 
     if vis_galactic_lines:
         for b in np.linspace(-90, 90, 7):
-            xs, ys = galfa_util.lbs_to_galfa_index(range(0, 360), [b] * 360, remin=True)
+            xs, ys = galfa_util.lbs_to_galfa_index(list(range(0, 360)), [b] * 360, remin=True)
             ax.plot(xs, ys, color='grey', alpha=.5)
 
     ax.imshow([[], []], extent=[0, galfa_const.GALFA_X_STEPS, 0, galfa_const.GALFA_Y_STEPS], origin='lower')
@@ -201,7 +201,7 @@ def vis_trees_sky_dist_3_panels(trees, trees_name, vis_galactic_lines=True,
 
     if vis_galactic_lines:
         for b in np.linspace(-90, 90, 7):
-            xs, ys = galfa_util.lbs_to_galfa_index(range(0, 360), [b] * 360, remin=True)
+            xs, ys = galfa_util.lbs_to_galfa_index(list(range(0, 360)), [b] * 360, remin=True)
             for ax in axs:
                 ax.plot(xs, ys, color='grey', alpha=.5)
 
@@ -261,7 +261,7 @@ def vis_trees_sky_dist_names_3_panels(trees, trees_name, vis_galactic_lines=True
 
     if vis_galactic_lines:
         for b in np.linspace(-90, 90, 7):
-            xs, ys = galfa_util.lbs_to_galfa_index(range(0, 360), [b] * 360, remin=True)
+            xs, ys = galfa_util.lbs_to_galfa_index(list(range(0, 360)), [b] * 360, remin=True)
             for ax in axs:
                 ax.plot(xs, ys, color='grey', alpha=.5)
 
@@ -317,12 +317,12 @@ def vis_trees_sky_dist_color_range(trees, trees_name, color_by, color_map_name, 
     fig = plt.figure(figsize=fig_size)
     ax = fig.add_subplot(111)
 
-    div_cmaps = set(['PiYG', 'PRGn', 'BrBG', 'PuOr', 'RdGy', 'RdBu', 'RdYlBu',
-                     'RdYlGn', 'Spectral', 'coolwarm', 'bwr', 'seismic'])
+    div_cmaps = {'PiYG', 'PRGn', 'BrBG', 'PuOr', 'RdGy', 'RdBu', 'RdYlBu',
+                     'RdYlGn', 'Spectral', 'coolwarm', 'bwr', 'seismic'}
 
     cmap = cm.get_cmap(color_map_name)
-    c_norm_max = float(max(v for v in color_by.values() if v is not None))
-    c_norm_min = float(min(v for v in color_by.values() if v is not None))
+    c_norm_max = float(max(v for v in list(color_by.values()) if v is not None))
+    c_norm_min = float(min(v for v in list(color_by.values()) if v is not None))
     if color_map_name in div_cmaps:
         print('in div')
         c_norm_max = max(abs(c_norm_max), abs(c_norm_min))
@@ -390,12 +390,12 @@ def vis_trees_sky_dist_color_range_3_panels(trees, trees_name, color_by, color_m
     ax3 = fig.add_subplot(313)
     axs = [ax1, ax2, ax3]
 
-    div_cmaps = set(['PiYG', 'PRGn', 'BrBG', 'PuOr', 'RdGy', 'RdBu', 'RdYlBu',
-                     'RdYlGn', 'Spectral', 'Spectral_r', 'coolwarm', 'bwr', 'seismic'])
+    div_cmaps = {'PiYG', 'PRGn', 'BrBG', 'PuOr', 'RdGy', 'RdBu', 'RdYlBu',
+                 'RdYlGn', 'Spectral', 'Spectral_r', 'coolwarm', 'bwr', 'seismic'}
 
     cmap = cm.get_cmap(color_map_name)
-    c_norm_max = float(max(v for v in color_by.values() if v is not None))
-    c_norm_min = float(min(v for v in color_by.values() if v is not None))
+    c_norm_max = float(max(v for v in list(color_by.values()) if v is not None))
+    c_norm_min = float(min(v for v in list(color_by.values()) if v is not None))
     if color_map_name in div_cmaps:
         print('in div')
         c_norm_max = max(abs(c_norm_max), abs(c_norm_min))
@@ -424,7 +424,7 @@ def vis_trees_sky_dist_color_range_3_panels(trees, trees_name, color_by, color_m
 
     if vis_galactic_lines:
         for b in np.linspace(-90, 90, 7):
-            xs, ys = galfa_util.lbs_to_galfa_index(range(0, 360), [b] * 360, remin=True)
+            xs, ys = galfa_util.lbs_to_galfa_index(list(range(0, 360)), [b] * 360, remin=True)
             for ax in axs:
                 ax.plot(xs, ys, color='grey', alpha=.5)
 
