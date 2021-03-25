@@ -27,7 +27,7 @@ def parse_files_into_mask_names(dir, verbose=False):
         keys.append(key)
 
     if verbose:
-        print('Found {0} keys, they are {1}'.format(len(keys), keys))
+        print(f'Found {len(keys)} keys, they are {key}')
 
     return keys
 
@@ -44,15 +44,14 @@ def get_good_masks_from_pickle(pickle_path, good_masks_keys, verbose=False):
     good_trees = {}
 
     if verbose:
-        print('Unpickled dictionary of all trees ({0} trees)'.format(len(all_trees)))
+        print(f'Unpickled dictionary of all trees ({len(all_trees)} trees)')
 
     for key in all_trees:
         if key in good_masks_keys:
             good_trees[key] = all_trees[key]
 
     if verbose:
-        print('Found {0} trees in the pickled trees out of {1} expected trees')\
-            .format(len(good_trees), len(good_masks_keys))
+        print(f'Found {len(good_trees)} trees in the pickled trees out of {len(good_masks_keys)} expected trees')
 
     return good_trees
 
@@ -79,7 +78,7 @@ def main():
         batch = 'second_batch'
 
     if args.verbose:
-        print('\nWorking on {0}'.format(batch))
+        print(f'\nWorking on {batch}')
 
     good_mask_dir = args.good_mask_dir if args.good_mask_dir else DROPBOX_GOOD_MASKS.replace('BATCH', batch)
     if good_mask_dir[-1] != '/':

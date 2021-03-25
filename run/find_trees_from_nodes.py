@@ -46,7 +46,7 @@ def main():
     logging.info('starting v index: {0}, ending v index: {1}'.format(starting_v, ending_v))
 
     # find the full dictionary paths
-    vs = range(starting_v, ending_v + 1)
+    vs = list(range(starting_v, ending_v + 1))
     node_dict_full_paths = []
     common_pickle_path = os.path.join(file_dir, common_pickle_name)
     logging.info('searching for paths of pickeled dictionaries of nodes')

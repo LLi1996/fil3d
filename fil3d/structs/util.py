@@ -132,12 +132,12 @@ def sorted_struct_dict_keys_by_area(dict_keys, key_type, descending=True):
     """
     # map keys into (key, size of mask)s
     if key_type.lower() == 'node':
-        mapped_keys = map(lambda k: (k, node_key_unhash(k)[0]), dict_keys)
+        mapped_keys = [(k, node_key_unhash(k)[0]) for k in dict_keys]
     elif key_type.lower() == 'tree':
-        mapped_keys = map(lambda k: (k, tree_key_unhash(k)[0]), dict_keys)
+        mapped_keys = [(k, tree_key_unhash(k)[0]) for k in dict_keys]
     else:
         return []
     # sort (key, size of mask)s by size of mask
     sorted_mapped_keys = sorted(mapped_keys, key=lambda x: x[1], reverse=descending)
     # map (key, size of mask) back to keys
-    return map(lambda (k, size): k, sorted_mapped_keys)
+    return [k_size[0] for k_size in sorted_mapped_keys]

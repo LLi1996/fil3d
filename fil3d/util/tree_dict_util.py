@@ -35,7 +35,7 @@ def find_all_trees_from_slices(vs, dict_full_paths, overlap_thresh=.85, reverse_
 
     continuous_tree_keys_set = set()
     # iterate through every velocity channel to match nodes
-    for i in xrange(len(vs)):
+    for i in range(len(vs)):
         node_dict_path = dict_full_paths[i]
         nodes_in_v_slice = pickle.load(open(node_dict_path, 'rb'))
 
@@ -43,7 +43,7 @@ def find_all_trees_from_slices(vs, dict_full_paths, overlap_thresh=.85, reverse_
         logging.debug("number of currently continuous trees: {0}".format(len(continuous_tree_keys_set)))
 
         # iterate through the nodes in descending order (by masked area)
-        for k in struct_util.sorted_struct_dict_keys_by_area(nodes_in_v_slice.keys(), key_type='node'):
+        for k in struct_util.sorted_struct_dict_keys_by_area(list(nodes_in_v_slice.keys()), key_type='node'):
             current_node = nodes_in_v_slice[k]
 
             logging.debug("on node {}".format(k))

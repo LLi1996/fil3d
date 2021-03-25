@@ -33,7 +33,7 @@ def main():
 
     trees = pickle.load(open(tree_dict_path, 'rb'))
     if args.verbose:
-        print "\nloading {} trees".format(len(trees))
+        print(f"\nloading {len(trees)} trees")
     cut_keys = []
 
     for k in trees:
@@ -44,12 +44,12 @@ def main():
 
     cut_keys_count = len(cut_keys)
     if args.verbose:
-        print "{} trees left after selection".format(cut_keys_count)
+        print(f"{cut_keys_count} trees left after selection")
 
     processed_count = 1
     for k in cut_keys:
         if args.verbose:
-            print "printing image of tree: {0}, {1} of {2} trees".format(k, processed_count, cut_keys_count)
+            print(f"printing image of tree: {k}, {processed_count} of {cut_keys_count} trees")
         vis.vis_tree_shadow(trees[k], k, save_fig=True, save_dir=save_fig_dir)
         processed_count += 1
 
