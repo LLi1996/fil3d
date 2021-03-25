@@ -1,0 +1,176 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Going from 2D to 3D &#8212; Fil3D  documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Examples" href="../examples.html" />
+    <link rel="prev" title="3D filament containers (MaskNodeTrees)" href="masknodetrees.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="going-from-2d-to-3d">
+<h1>Going from 2D to 3D<a class="headerlink" href="#going-from-2d-to-3d" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+<p>We start with:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>For each velocity channel, a set (python dictionary) of pre-processed masks. We call the container for these masks
+and their corners <code class="docutils literal notranslate"><span class="pre">nodes</span></code>.</p></li>
+<li><p>An overlap threshold.</p></li>
+<li><p>We also reserve an empty dictionary to store the 3D <code class="docutils literal notranslate"><span class="pre">trees</span></code> built from these <code class="docutils literal notranslate"><span class="pre">nodes</span></code>.</p></li>
+</ul>
+</div></blockquote>
+<p>We go through each velocity channel and its associated set of <code class="docutils literal notranslate"><span class="pre">nodes</span></code> in order:</p>
+<blockquote>
+<div><blockquote>
+<div><ul>
+<li><p>On the first velocity channel we go through all of the <code class="docutils literal notranslate"><span class="pre">nodes</span></code> and initialize a new <code class="docutils literal notranslate"><span class="pre">tree</span></code> for each <code class="docutils literal notranslate"><span class="pre">node</span></code>
+(there are no existing <code class="docutils literal notranslate"><span class="pre">tree</span></code> as this moment).</p></li>
+<li><p>For all subsequent velocity channels we:</p>
+<blockquote>
+<div><ul>
+<li><p>Go through all of the <code class="docutils literal notranslate"><span class="pre">nodes</span></code>, for each <code class="docutils literal notranslate"><span class="pre">node</span></code> we try to match it to an existing <code class="docutils literal notranslate"><span class="pre">tree</span></code>:</p>
+<blockquote>
+<div><ul>
+<li><p>To match, we take the dictionary of existing, non-terminated <code class="docutils literal notranslate"><span class="pre">tree</span></code>, for each <code class="docutils literal notranslate"><span class="pre">tree</span></code>, we:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Compare the mask overlap between the current <code class="docutils literal notranslate"><span class="pre">node</span></code> and the last <code class="docutils literal notranslate"><span class="pre">node</span></code> on the <code class="docutils literal notranslate"><span class="pre">tree</span></code> (the “last
+<code class="docutils literal notranslate"><span class="pre">node</span></code>” on the <code class="docutils literal notranslate"><span class="pre">tree</span></code> has to be on the previous velocity channel). The comparison is a “two way”
+comparison - we first create a combined (bit-wise AND) overlap mask between the current <code class="docutils literal notranslate"><span class="pre">node</span></code> and the
+last <code class="docutils literal notranslate"><span class="pre">node</span></code> on the <code class="docutils literal notranslate"><span class="pre">tree</span></code> we’re trying to match to, then compute the overlap fraction for both the
+(combined mask, current <code class="docutils literal notranslate"><span class="pre">node</span></code>) pair and the (combined mask, last <code class="docutils literal notranslate"><span class="pre">node</span></code> on the <code class="docutils literal notranslate"><span class="pre">tree</span></code>) pair. If
+the overlap fraction for either pair is greater than our overlap threshold, we consider it to be a match
+and append the current <code class="docutils literal notranslate"><span class="pre">node</span></code> onto the <code class="docutils literal notranslate"><span class="pre">tree</span></code>.</p></li>
+<li><p>We do this for each existing <code class="docutils literal notranslate"><span class="pre">tree</span></code>, regardless if the current <code class="docutils literal notranslate"><span class="pre">node</span></code> has already matched with a
+<code class="docutils literal notranslate"><span class="pre">tree</span></code> - this means that a given <code class="docutils literal notranslate"><span class="pre">node</span></code> can match to multiple <code class="docutils literal notranslate"><span class="pre">tree</span></code>.</p></li>
+<li><p>This also means that multiple <code class="docutils literal notranslate"><span class="pre">nodes</span></code> can match to a given <code class="docutils literal notranslate"><span class="pre">tree</span></code>. If this does happen (we match the
+current <code class="docutils literal notranslate"><span class="pre">node</span></code> to a given <code class="docutils literal notranslate"><span class="pre">tree</span></code> that has already matched with another <code class="docutils literal notranslate"><span class="pre">node</span></code> on the current
+velocity channel), instead of appending the current <code class="docutils literal notranslate"><span class="pre">node</span></code> onto the given <code class="docutils literal notranslate"><span class="pre">tree</span></code>, we merge the
+current <code class="docutils literal notranslate"><span class="pre">node</span></code> with the other <code class="docutils literal notranslate"><span class="pre">node</span></code> on the current velocity channel that has also matched with the
+given <code class="docutils literal notranslate"><span class="pre">tree</span></code> before doing the append. This is so that, on each velocity channel of the <code class="docutils literal notranslate"><span class="pre">tree</span></code>, we
+have a “unified” mask.</p></li>
+</ol>
+</div></blockquote>
+</li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div></blockquote>
+<ul class="simple">
+<li><p>If, after all of this, no match is found for the current <code class="docutils literal notranslate"><span class="pre">node</span></code>, we initialize a new <code class="docutils literal notranslate"><span class="pre">tree</span></code> from the <code class="docutils literal notranslate"><span class="pre">node</span></code>.</p></li>
+<li><p>Delete all of the terminated trees of length 1 (trees that were initialized by an unmatched <code class="docutils literal notranslate"><span class="pre">node</span></code> but didn’t
+match with any <code class="docutils literal notranslate"><span class="pre">node</span></code> in the next immediate velocity channel). This is to minimize the running number of <code class="docutils literal notranslate"><span class="pre">tree</span></code>
+we are actively trying to match new <code class="docutils literal notranslate"><span class="pre">nodes</span></code> onto.</p></li>
+</ul>
+</div></blockquote>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">Fil3D</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Tutorial</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="masknodes.html">2D filament mask containers (MaskNodes)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="masknodetrees.html">3D filament containers (MaskNodeTrees)</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Going from 2D to 3D</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Tutorial</a><ul>
+      <li>Previous: <a href="masknodetrees.html" title="previous chapter">3D filament containers (MaskNodeTrees)</a></li>
+      <li>Next: <a href="../examples.html" title="next chapter">Examples</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Larry Li.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../_sources/pages/tutorial/buildingtrees.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,6 +1,4 @@
 
-*Tutorial*
-
 *.pyc
 
 .DS_store
@@ -8,3 +6,5 @@
 .idea/*
 
 */.ipynb_checkpoints
+
+docsrc/_build/*
