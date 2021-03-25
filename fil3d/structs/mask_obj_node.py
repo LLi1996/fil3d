@@ -7,34 +7,34 @@ from fil3d.util import cube_util
 
 
 class MaskObjNode(object):
-    """
-    The MaskObjNode class is made to contain a single mask and its corners.
+    """The MaskObjNode class is made to contain a single mask and its corners.
+
     The mask and corner can be produced by FilFinder or any other filament finding code. You can also manually input
     masks and corners .
 
     Each instance takes in:
-       #. a mask (2d np bit array)
-       #. the corners of the mask indicating where the mask is located
-       #. the index of the velocity channel where the mask is located
 
-    It is important to note the difference between the area of a mask and the
-    masked area: since the masks are always rectangles, the area of a mask is just
-    calculated from dimensions of the corners. The masked area, however, is
-    calculated by counting the amount of pixels that's masked (marked TRUE in
-    the np array).
+    #. a mask (2d np bit array)
+    #. the corners of the mask indicating where the mask is located
+    #. the index of the velocity channel where the mask is located
+
+    It is important to note the difference between the area of a mask and the masked area: since the masks are always
+    rectangles, the area of a mask is just calculated from dimensions of the corners. The masked area, however, is
+    calculated by counting the amount of pixels that's masked (marked TRUE in the np array).
     """
 
     def __init__(self, mask_obj, corners, v_slice_index):
-        """
-        :param mask_obj: {np.array}
-            2D bit mask.
+        """Initiate a new MaskObjNode from the input mask, corner, & velocity channel index.
 
-        :param corners: {List[List, List]}
-            Corners of mask. In [(top left)[i,j],(bottom right)[i,j]] format when (0, 0) is at top left. This usually
-            translates to [[y0, x0], [y1, x1]] in np indexing.
+        :param mask_obj: 2D bit mask.
+        :type mask_obj: np.array
 
-        :param v_slice_index: {int}
-            Index of the velocity channel.
+        :param corners: Corners of mask. In [<top left>, <bottom right>] format when (0, 0) is at top left. \
+        This usually translates to [[y0, x0], [y1, x1]] in np indexing.
+        :type corners: List[List, List]
+
+        :param v_slice_index: Index of the velocity channel.
+        :type v_slice_index: int
 
         """
 
@@ -60,15 +60,16 @@ class MaskObjNode(object):
         self.masked_area_size = self.checkMaskedAreaSize()
 
     def merge_node(self, other_node):
-        """
-        Merge other_node with self.
-        Append to self.v_slice_index if needed and create the combined OR mask of self.mask and other_node.mask.
-        The combined or mask is set as the new self.mask and other attributes are fixed.
+        """Merge ``other_node`` with self.
 
-        :param other_node: {MaskObjNode}
+        Append to ``self.v_slice_index`` if needed and create the combined OR mask of ``self.mask`` and
+        ``other_node.mask``.
+        The combined or mask is set as the new ``self.mask`` and other attributes are fixed.
 
-        :return: {bool}
-            True
+        :param other_node: Node to be merged with self.
+        :type other_node: MaskObjNode
+
+        :return: ``True``
         """
         if self.v_slice_index[-1] != other_node.v_slice_index[0]:
             self.v_slice_index.append(other_node.v_slice_index[0])
@@ -92,26 +93,26 @@ class MaskObjNode(object):
         return True
 
     def mergeNode(self, other_node):
-        """
-        Alias for merge_node()
+        """Alias for merge_node()
         """
         return self.merge_node(other_node)
 
     def check_mask_overlap(self, other_node, overlap_thresh):
-        """
-        First check if the corners of self.mask and other_node.mask overlap.
-        If the corners do overlap (meaning some part of the two squares overlap) we then check if actual masks overlap.
+        """Check if there are overlaps between ``other_node`` and ``self``.
+
+        First check if the corners of ``self.mask`` and ``other_node.mask`` overlap.
+        If the corners do overlap (meaning some part of the two squares overlap), we then check if actual masks overlap.
         To check for actual overlap, a combined AND mask is first made, and the masked area calculated.
         The masked area of the combined AND mask is then compared to the masked area of the input masks.
 
-        :param other_node: {MaskObjNode}
+        :param other_node: Node to check for overlap with ``self``.
+        :type other_node: MaskObjNode
 
-        :param overlap_thresh: {float}
+        :param overlap_thresh: Overlap fraction expressed as decimal.
+        :type overlap_thresh: float
 
-        :return: {bool}
-            True if the the overlap between the combined AND mask and _either_ of the masks is greater than
-            overlap_thresh.
-
+        :return: ``True`` if the the overlap between the combined AND mask and _either_ of the masks is greater than \
+        overlap_thresh.
         """
         if self.checkCornersOverlap(other_node) == False:
             return False
@@ -127,21 +128,28 @@ class MaskObjNode(object):
             return False
 
     def checkMaskOverlap(self, other_node, overlap_thresh):
-        """
-        Alias for check_mask_overlap()
+        """Alias for check_mask_overlap()
         """
         return self.check_mask_overlap(other_node=other_node, overlap_thresh=overlap_thresh)
 
     def combineMask(self, other_node, merge_type='AND'):
-        """
-        Merge self.mask and other_node.mask. The corners of the 2 masks are
-        first matched to fined the smallest square that contains both masks,
-        a new mask is then made to that dimention. Elements of the new mask are
-        filled basked on the merge_type ('AND' or 'OR').
+        """Combine ``self.mask`` with ``other_node.mask``.
 
-        Returns:
-            the new combined mask
+        The corners of the 2 masks are first matched to find the smallest square that contains both masks, a new mask
+        is then made to that dimension. Elements of the new mask are filled basked on the merge_type ('AND' or 'OR').
+
+        :param other_node: Node whos mask we will combine with.
+        :type other_node: MaskObjNode
+
+        :param merge_type: Type of merge. Choices: 'AND', 'OR'. Defaults to 'AND'.
+        :type merge_type: str
+
+        :return: Combined mask.
+        :rtype: np.array
         """
+        if merge_type.upper() not in ('AND', 'OR'):
+            raise RuntimeError(f'merge_type {merge_type} not supported.')
+
         new_corners = self.matchCorners(other_node)
         m_dim = new_corners[1][0] - new_corners[0][0]
         n_dim = new_corners[1][1] - new_corners[0][1]
@@ -151,20 +159,19 @@ class MaskObjNode(object):
         expanded_self_mask = self.expandMask(new_corners)
         expanded_other_mask = other_node.expandMask(new_corners)
 
-        if merge_type == 'AND':
+        if merge_type.upper() == 'AND':
             combined_mask = np.bitwise_and(expanded_self_mask, expanded_other_mask)
-        elif merge_type == 'OR':
+        elif merge_type.upper() == 'OR':
             combined_mask = np.bitwise_or(expanded_self_mask, expanded_other_mask)
 
         return combined_mask
 
     def checkCornersOverlap(self, other_node):
-        """
-        Check if self.mask and other_node.mask have any overlap
-        Arguments:
-            other_node {MaskObjNode} -- other node
-        Returns:
-            bool -- true if overlap
+        """Check if ``self.mask`` and ``other_node.mask`` have any overlap based on the corners.
+
+        :param other_node: Other node to check against.
+        :type other_node: MaskObjNode
+        :return: ``True`` if there is a corner overlap.
         """
         # vertical mismatch
         if other_node.corner_max[0] <= self.corner_min[0] or other_node.corner_min[0] >= self.corner_max[0]:
@@ -175,13 +182,12 @@ class MaskObjNode(object):
         return True
 
     def matchCorners(self, other_node):
-        """
-        Compare the self.mask and other_node.mask and pick out the smallest
-        square that contain both masks.
-        Arguments:
-            other_node {MaskObjNode} -- other node
-        Returns:
-            corners -- the corners of that square.
+        """Compare ``self.mask`` and ``other_node.mask`` and pick out the smallest square that contain both masks.
+
+        :param other_node: Other node to check against.
+        :type other_node: MaskObjNode
+        :return: Corners of the smallest square to contain both masks.
+        :rtype: List[List, List]
         """
         corner_min = [min(self.corner_min[i], other_node.corner_min[i]) for i in range(2)]
         corner_max = [max(self.corner_max[i], other_node.corner_max[i]) for i in range(2)]
@@ -189,13 +195,11 @@ class MaskObjNode(object):
         return [corner_min, corner_max]
 
     def checkMaskedAreaSize(self, mask=None):
-        """
-        Calculate the amount of pixels that are masked by self.mask. If a new
-        mask is provided then that mask is used
-        Keyword Arguments:
-            mask {2d np.array of bool} -- mask
-        Returns:
-            int -- # of pixels masked (as opposed to the area of the mask)
+        """Calculate the amount of pixels that are masked by ``self.mask``.
+
+        :param mask: If a mask is provided then that mask is used instead of ``self.mask``. Defaults to ``None``.
+        :type mask: np.array
+        :return: # of pixels masked (as opposed to the area of the mask)
         """
         if mask is None:
             mask = self.mask
@@ -203,13 +207,15 @@ class MaskObjNode(object):
         return np.size(np.where(mask == True)[0])
 
     def expandMask(self, new_corners):
-        """
-        Expand self.mask so its corners match the new_corners provided. Masks
-        are paded with 0s with the numpy function pad()
-        Arguments:
-            new_corners {MaskObjNode.corners} -- new corners
-        Returns:
-            new expanded mask
+        """Expand ``self.mask`` so its corners match the `new_corners` provided.
+
+        Masks are padded with 0s with the numpy function pad().
+
+        :param new_corners: New corners to expand the current mask to.
+        :type new_corners: List[List, List]
+
+        :return: New expanded mask.
+        :rtype: np.array
         """
         mask = self.mask
 
@@ -222,14 +228,12 @@ class MaskObjNode(object):
         return np.pad(mask, ((i_pad_before, i_pad_after), (j_pad_before, j_pad_after)), 'constant', constant_values=0)
 
     def checkAreaSize(self, corners=None):
-        """
-        Calculate the area of self.mask by looking at its dimentions from its
-        corners. If corners are provided then an area based on that corner is
-        calculated.
-        Keyword Arguments:
-            corners {MaskObjNode.corners} -- corners (default: {None})
-        Returns:
-            int -- the area of the mask (in pixels^2)
+        """Calculate the square size of ``self.mask`` by looking at the dimensions from its corners.
+
+        :param corners: If corners are provided then an area based on that corner is calculated. Defaults to ``None``.
+        :type corners: List[List, List]
+
+        :return: The square area of the mask (in pixels^2)
         """
         if corners is None:
             corners = self.corners
@@ -237,9 +241,10 @@ class MaskObjNode(object):
         return (corners[1][0] - corners[0][0]) * (corners[1][1] - corners[0][1])
 
     def getDimentions(self):
-        """Calculate the pixel dimentions of the mask
-        Returns:
-            int, int -- width, height
+        """Calculate the pixel dimensions of the mask.
+
+        :return: width, height
+        :rtype: Tuple(int, int)
         """
         height = self.corner_max[0] - self.corner_min[0]
         width = self.corner_max[1] - self.corner_min[1]
@@ -250,9 +255,11 @@ class MaskObjNode(object):
         return width, height
 
     def getAR(self):
-        """Calculates the aspect ratio of the mask
-        Returns:
-            float -- aspect ratio
+        """Calculates the aspect ratio of the mask.
+        Note this is NOT the aspect ratio of the masked area.
+
+        :return: aspect ratio
+        :rtype: float
         """
         width, height = self.getDimentions()
 

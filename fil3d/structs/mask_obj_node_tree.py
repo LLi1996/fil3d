@@ -15,6 +15,11 @@ class MaskObjNodeTree:
     """
 
     def __init__(self, node_obj):
+        """Initiate a new MaskObjNodeTree object based on the starting node.
+
+        :param node_obj: Starting node of the tree.
+        :type node_obj: MaskObjNode
+        """
         self.root_node = copy.deepcopy(node_obj)
         self.root_v_slice = node_obj.v_slice_index[0]
 
@@ -24,14 +29,21 @@ class MaskObjNodeTree:
         self.has_ended = False
 
     def addNodeOnNewVChannel(self, new_node, verbose=False):
-        """
-        the "standard" procedure of adding a node to a tree, we:
-            1) merge the node into the tree root node (to capture the overall "shadow" of the tree)
-            2) append the node to the list of nodes on the tree
+        """The "standard" procedure of adding a new node onto a tree.
 
-        :param new_node:
-        :param verbose:
-        :return:
+        We take a new node and:
+
+        #. merge the node into the tree root node (to capture the overall "shadow" of the tree)
+        #. append the node to the list of nodes on the tree
+        #. assume it is on the "next" velocity channel and append the length of the tree by 1
+
+        :param new_node: New node to be added onto the "next" velocity channel.
+        :type new_node: MaskObjNode
+        :param verbose: (optional) Currently not used. Defaults to ``False``.
+        :type verbose: bool
+
+        :return: The length of the tree post adding the node on the new velocity channel (this should equal the old \
+        length + 1).
         """
         logging.debug("Adding node to tree (new velocity channel)")
         logging.debug("New node's corners: " + str(new_node.corners))
@@ -50,16 +62,20 @@ class MaskObjNodeTree:
         return self.length
 
     def addNodeOnSameVChannel(self, new_node):
-        """
-        the "special" procedure of adding a node to a tree when the tree already has a node on that velocity channel, we:
-            1) merge the node into the tree root node (to capture the overall "shadow of the tree)
-            2) merge the node to the last node in the list of nodes on the tree (with the assumption that the new node
-            and the last node are on the same velocity channel)
-        this is so that the node at index i of the node list is representative of all the nodes that belong to this tree
-        on velocity channel x - tree starting velocity channel + i
+        """The "special" procedure of adding a node to a tree when the tree already has a node on that velocity channel.
 
-        :param new_node:
-        :return:
+        In this special case we need to preserve the design that a given node at index i of the node list is
+        representative of all the nodes that belong to this tree on that velocity channel (the channel being the tree
+        starting velocity channel + i). To do this we take the new node and:
+        #. merge the node into the tree root node (to capture the overall "shadow of the tree)
+        #. merge the node with the last node in the list of nodes on the tree (with the assumption that the new node \
+        and the last node are on the same velocity channel)
+
+        :param new_node: New node to be added onto the same velocity channel as the last node.
+        :type new_node: MaskObjNode
+
+        :return: The length of the tree post adding the node on the same velocity channel (this should equal what \
+        it was before.
         """
         logging.debug("Adding node to tree (same velocity channel)")
         logging.debug("New node's corners: " + str(new_node.corners))
@@ -77,12 +93,27 @@ class MaskObjNodeTree:
 
 
     def getNode(self, node_number):
+        """Return the node at a given index.
+
+        :param node_number: Index.
+        :type node_number: int
+
+        :rtype: MaskObjNode
+        """
         return self.node_list[node_number]
 
     def getLastNode(self):
+        """Return the last node.
+
+        :rtype: MaskObjNode
+        """
         return self.getNode(self.length - 1)
 
     def getTreeMask(self):
+        """Return the mask that contains the overall area/shadow of the tree.
+
+        :rtype: NumPy.Array
+        """
         return self.root_node.mask
 
     def getTreeMaskSize2D(self):
