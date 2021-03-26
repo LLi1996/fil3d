@@ -8,3 +8,9 @@
 */.ipynb_checkpoints
 
 docsrc/_build/*
+
+build/*
+
+dist/*
+
+fil3d/Fil3D.egg-info/*

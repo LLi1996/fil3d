@@ -16,14 +16,15 @@ channels with a % overlap. Nodes are then connected into a tree of masks forming
 
 
 Links:
-  * `github <https://github.com/LLi1996/fil3d>`_
+
+* `github <https://github.com/LLi1996/fil3d>`_
 
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
-   Installation <pages/installation.rst>
+   Getting started <pages/quickstart.rst>
    Tutorial <pages/tutorial/index.rst>
    Examples <pages/examples.rst>
 
