@@ -22,7 +22,14 @@ setuptools.setup(
     description='A python package for building 3d filaments in (x,y,v)',
     long_description=long_description,
     url='https://lli1996.github.io/fil3d/',
-    package_dir={'': 'src'},
-    packages=setuptools.find_packages('fil3d'),
-    python_requires='>=3.6'
+    package_dir={'': 'fil3d'},
+    packages=setuptools.find_packages(where='fil3d'),
+    python_requires='>=3.6',
+    install_requires=[
+        'astropy',
+        'matplotlib',
+        'numpy',
+        'scipy',
+        # 'filfinder
+    ]
 )
