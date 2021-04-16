@@ -6,7 +6,10 @@ sorting function based on the hashed names
 
 LL2017
 """
+
 import logging
+
+import pickle
 
 
 def node_key_hash(original_key):
@@ -141,3 +144,44 @@ def sorted_struct_dict_keys_by_area(dict_keys, key_type, descending=True):
     sorted_mapped_keys = sorted(mapped_keys, key=lambda x: x[1], reverse=descending)
     # map (key, size of mask) back to keys
     return [k_size[0] for k_size in sorted_mapped_keys]
+
+
+class PreV001Unpickler(pickle.Unpickler):
+    """ Child class of pickle.Unpickler with updated find_class() behavior to help with unpickling very old structs
+    """
+
+    def find_class(self, module, name):
+        """ Overloaded ``find_class()`` that handles module renames when unpickling
+        Will rename 'cube_fil_finder.structs.mask_obj_node' and 'cube_fil_finder.structs.mask_obj_node_tree' input
+        modules (old, pre v0.0.1 import paths for structs) to just 'fil3d' since all imports can be done at the top
+        ``fil3d`` level now.
+
+        :param module: See ``Unpickler.find_class()``.
+
+        :param name: See ``Unpickler.find_class()``.
+
+        :return: See ``Unpickler.find_class()``.
+        """
+        renamed_module = module
+        if renamed_module == 'cube_fil_finder.structs.mask_obj_node' \
+                or renamed_module == 'cube_fil_finder.structs.mask_obj_node_tree':
+            renamed_module = 'fil3d'
+        return super(PreV001Unpickler, self).find_class(renamed_module, name)
+
+
+def pre_v001_pickle_load(file_obj, encoding='latin1', **kwargs):
+    """ Override of pickle.load() for unpickling very old structs
+
+    This creates an instance of PreV001Unpickler that has an updated find_class() to fix any potential import issues
+    while unpickling.
+
+    :param file_obj: See ``pickle.load()``.
+
+    :param encoding: For some reason old 2.7 pickles of structs (at least the ones I had on hand) were made with \
+    'latin1' encoding (and not the 'ASCII' default of 3.7) so this by defaults selects 'latin1'.
+
+    :param kwargs: See ``pickle.load()``.
+
+    :return: See ``pickle.load()``.
+    """
+    return PreV001Unpickler(file_obj, encoding=encoding, **kwargs).load()
