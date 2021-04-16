@@ -28,8 +28,8 @@ setuptools.setup(
     install_requires=[
         'astropy',
         'matplotlib',
-        'numpy',
-        'scipy',
-        # 'filfinder
+        'numpy>=0.19',
+        'scipy',  # todo: possible sci image change
+        # todo: correctly include the semi dependency of filfinder
     ]
 )
