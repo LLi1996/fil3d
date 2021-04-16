@@ -175,6 +175,8 @@ def pre_v001_pickle_load(file_obj, encoding='latin1', **kwargs):
     This creates an instance of PreV001Unpickler that has an updated find_class() to fix any potential import issues
     while unpickling.
 
+    Made possible by https://stackoverflow.com/a/53327348.
+
     :param file_obj: See ``pickle.load()``.
 
     :param encoding: For some reason old 2.7 pickles of structs (at least the ones I had on hand) were made with \
