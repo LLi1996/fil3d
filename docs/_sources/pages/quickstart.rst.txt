@@ -49,3 +49,5 @@ Optional:
 
     * filfinder (`docs <https://fil-finder.readthedocs.io/en/latest/>`_)
 
+
+# TODO: notes on the different version of filfinder and the modification to be done to filfinder objs to pull out the masks

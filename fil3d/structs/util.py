@@ -6,7 +6,13 @@ sorting function based on the hashed names
 
 LL2017
 """
+
 import logging
+import pickle
+
+import numpy as np
+
+from fil3d.util import cube_util
 
 
 def node_key_hash(original_key):
@@ -141,3 +147,79 @@ def sorted_struct_dict_keys_by_area(dict_keys, key_type, descending=True):
     sorted_mapped_keys = sorted(mapped_keys, key=lambda x: x[1], reverse=descending)
     # map (key, size of mask) back to keys
     return [k_size[0] for k_size in sorted_mapped_keys]
+
+
+class PreV001Unpickler(pickle.Unpickler):
+    """ Child class of pickle.Unpickler with updated find_class() behavior to help with unpickling very old structs
+    """
+
+    def find_class(self, module, name):
+        """ Overloaded ``find_class()`` that handles module renames when unpickling
+        Will rename 'cube_fil_finder.structs.mask_obj_node' and 'cube_fil_finder.structs.mask_obj_node_tree' input
+        modules (old, pre v0.0.1 import paths for structs) to just 'fil3d' since all imports can be done at the top
+        ``fil3d`` level now.
+
+        :param module: See ``Unpickler.find_class()``.
+
+        :param name: See ``Unpickler.find_class()``.
+
+        :return: See ``Unpickler.find_class()``.
+        """
+        renamed_module = module
+        if renamed_module == 'cube_fil_finder.structs.mask_obj_node' \
+                or renamed_module == 'cube_fil_finder.structs.mask_obj_node_tree':
+            renamed_module = 'fil3d'
+        return super(PreV001Unpickler, self).find_class(renamed_module, name)
+
+
+def pre_v001_pickle_load(file_obj, encoding='latin1', **kwargs):
+    """ Override of pickle.load() for unpickling very old structs
+
+    This creates an instance of PreV001Unpickler that has an updated find_class() to fix any potential import issues
+    while unpickling.
+
+    Made possible by https://stackoverflow.com/a/53327348.
+
+    :param file_obj: See ``pickle.load()``.
+
+    :param encoding: For some reason old 2.7 pickles of structs (at least the ones I had on hand) were made with \
+    'latin1' encoding (and not the 'ASCII' default of 3.7) so this by defaults selects 'latin1'.
+
+    :param kwargs: See ``pickle.load()``.
+
+    :return: See ``pickle.load()``.
+    """
+    return PreV001Unpickler(file_obj, encoding=encoding, **kwargs).load()
+
+
+def check_node_b_cutoff(node, hdr, b_cutoff=30):
+    """checks if the node is within the b_cutoff range
+    Arguments:
+        node {mask_node} -- node obj
+        hdr {fits.header} -- slice/cube FITS header
+    Keyword Arguments:
+        b_cutoff {int} -- latitude cutoff (default: {30})
+    Returns:
+        bool -- true if within cutoff, false if not
+    """
+    ys = [node.corner_min[0], node.corner_max[0]]
+    xs = [node.corner_min[1], node.corner_max[1]]
+
+    ras, decs = cube_util.index_to_radec(xs, ys, hdr)
+    ls, bs = cube_util.radecs_to_lb(ras, decs)
+
+    if bs[0] * bs[1] <= 0:
+        return True
+
+    if np.abs(bs[0]) >= b_cutoff and np.abs(bs[1]) >= b_cutoff:
+        return False
+    else:
+        return True
+
+
+def get_node_plot_corners(node):
+    """gets the x y plot corners for matplotlib
+    Arguments:
+        node {mask_node} -- node obj
+    """
+    return [node.corner_min[0], node.corner_max[1], node.corner_min[1], node.corner_max[1]]

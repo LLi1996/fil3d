@@ -129,7 +129,7 @@ class MaskObjNodeTree:
         return self.root_v_slice
 
     def getTreeAspectRatio(self):
-        return self.root_node.getAR()
+        return self.root_node.get_ar()
 
     def removeLastNode(self):
         pass

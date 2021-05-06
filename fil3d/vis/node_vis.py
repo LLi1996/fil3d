@@ -2,11 +2,12 @@
 node vis lib
 """
 
-import numpy as np
-from fil3d.structs import mask_obj_node as maskNode
-from fil3d.util import moments
-from fil3d.galfa import galfa_const
 import matplotlib.pyplot as plt
+import numpy as np
+
+from fil3d.galfa import galfa_const
+from fil3d.structs import util as struct_util
+from fil3d.util import moments
 
 
 def vis_node_mask_moments(mask_node, mask_name, save_fig=False, save_dir=None,
@@ -30,7 +31,7 @@ def vis_node_mask_moments(mask_node, mask_name, save_fig=False, save_dir=None,
 
     mask = mask_node.mask
 
-    plot_corners = maskNode.get_node_plot_corners(mask_node)
+    plot_corners = struct_util.get_node_plot_corners(mask_node)
 
     x_bar, y_bar, theta_1, theta_2, roundness = moments.get_node_mask_orientation_info(mask_node)
 
@@ -84,10 +85,9 @@ def vis_mask_sky_dist(mask_node, mask_name, save_fig=False, save_dir=None, save_
 
 
 def vis_mask_with_data(node, data, key=None, verbose=False, return_fig=False):
-
     if len(data.shape) == 3:  # v info will be taken into account
         data = data[node.v_slice_index[0]]
-    elif len(data.shape) == 2: # v info will not be taken into account
+    elif len(data.shape) == 2:  # v info will not be taken into account
         data = data
     else:
         raise ValueError('data is neither 2d or 3d')

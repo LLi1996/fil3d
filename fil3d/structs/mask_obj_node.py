@@ -1,9 +1,10 @@
+from __future__ import annotations
+
 import logging
 
 import numpy as np
 
 from fil3d.galfa import galfa_const
-from fil3d.util import cube_util
 
 
 class MaskObjNode(object):
@@ -34,13 +35,13 @@ class MaskObjNode(object):
         :type corners: List[List, List]
 
         :param v_slice_index: Index of the velocity channel.
-        :type v_slice_index: int
+        :type v_slice_index: Union[List[Int], int]
 
         """
 
         self.mask = mask_obj
-        corners = fix_boarder_corners(self.mask, corners)
 
+        corners = self.fix_boarder_corners(self.mask, corners)
         # corners are [(top left)[i,j],(bottom right)[i,j]]
         # organize corners into list of lists instead of list of tups and convert into [x,y]
         self.corners_original = corners
@@ -48,16 +49,32 @@ class MaskObjNode(object):
         self.corner_min = self.corners_original[0]
         self.corner_max = self.corners_original[1]
         for i in range(2):
-            assert self.corner_max[i] > self.corner_min[i]
+            assert self.corner_max[i] > self.corner_min[i], 'corners seem messed up'
         # should really just use corners_original and stick to np indexing
         # for future references use self.corners_original
-        # other fields preserved for backward compatibility
+        # other fields preserved for backwards compatibility
 
-        self.v_slice_index = [v_slice_index]
+        if isinstance(v_slice_index, list):
+            self.v_slice_index = v_slice_index
+        else:
+            self.v_slice_index = [v_slice_index]
 
         self.visited = False
-        self.mask_size = self.checkAreaSize()
-        self.masked_area_size = self.checkMaskedAreaSize()
+
+        self.mask_size = self.check_area_size()
+        assert self.mask_size == self.mask.shape[0] * self.mask.shape[1], 'mask size and corner mismatch'
+
+        self.masked_area_size = self.check_masked_area_size()
+
+    def __eq__(self, other: MaskObjNode) -> bool:
+        if not isinstance(other, MaskObjNode) \
+                or not np.array_equal(self.mask, other.mask) \
+                or self.corners_original != other.corners_original \
+                or self.v_slice_index != other.v_slice_index \
+                or self.visited != other.visited:
+            return False
+        else:
+            return True
 
     def merge_node(self, other_node):
         """Merge ``other_node`` with self.
@@ -74,20 +91,20 @@ class MaskObjNode(object):
         if self.v_slice_index[-1] != other_node.v_slice_index[0]:
             self.v_slice_index.append(other_node.v_slice_index[0])
 
-        if self.checkCornersOverlap(other_node) == False:
+        if self.check_corners_overlap(other_node) == False:
             logging.warning('corners don\'t overlap!' \
                             + '(fine if using mergeNode() to consolidate two nodes on the same velocity channel)')
 
-        combined_or_mask = self.combineMask(other_node, merge_type='OR')
-        combined_masked_area_size = self.checkMaskedAreaSize(combined_or_mask)
-        new_corners = self.matchCorners(other_node)
+        combined_or_mask = self.combine_mask(other_node, merge_type='OR')
+        combined_masked_area_size = self.check_masked_area_size(combined_or_mask)
+        new_corners = self.match_corners(other_node)
 
         self.mask = combined_or_mask
         self.corners = new_corners
         self.corners_original = self.corners
         self.corner_min = self.corners[0]
         self.corner_max = self.corners[1]
-        self.mask_size = self.checkAreaSize(new_corners)
+        self.mask_size = self.check_area_size(new_corners)
         self.masked_area_size = combined_masked_area_size
 
         return True
@@ -114,11 +131,11 @@ class MaskObjNode(object):
         :return: ``True`` if the the overlap between the combined AND mask and _either_ of the masks is greater than \
         overlap_thresh.
         """
-        if self.checkCornersOverlap(other_node) == False:
+        if self.check_corners_overlap(other_node) == False:
             return False
 
-        combined_and_mask = self.combineMask(other_node, merge_type='AND')
-        combined_masked_area_size = self.checkMaskedAreaSize(combined_and_mask)
+        combined_and_mask = self.combine_mask(other_node, merge_type='AND')
+        combined_masked_area_size = self.check_masked_area_size(combined_and_mask)
 
         if float(combined_masked_area_size) / float(self.masked_area_size) >= overlap_thresh:
             return True
@@ -132,7 +149,7 @@ class MaskObjNode(object):
         """
         return self.check_mask_overlap(other_node=other_node, overlap_thresh=overlap_thresh)
 
-    def combineMask(self, other_node, merge_type='AND'):
+    def combine_mask(self, other_node, merge_type='AND'):
         """Combine ``self.mask`` with ``other_node.mask``.
 
         The corners of the 2 masks are first matched to find the smallest square that contains both masks, a new mask
@@ -150,14 +167,14 @@ class MaskObjNode(object):
         if merge_type.upper() not in ('AND', 'OR'):
             raise RuntimeError(f'merge_type {merge_type} not supported.')
 
-        new_corners = self.matchCorners(other_node)
+        new_corners = self.match_corners(other_node)
         m_dim = new_corners[1][0] - new_corners[0][0]
         n_dim = new_corners[1][1] - new_corners[0][1]
 
         combined_mask = np.zeros((m_dim, n_dim), dtype=bool)
 
-        expanded_self_mask = self.expandMask(new_corners)
-        expanded_other_mask = other_node.expandMask(new_corners)
+        expanded_self_mask = self.expand_mask(new_corners)
+        expanded_other_mask = other_node.expand_mask(new_corners)
 
         if merge_type.upper() == 'AND':
             combined_mask = np.bitwise_and(expanded_self_mask, expanded_other_mask)
@@ -166,7 +183,12 @@ class MaskObjNode(object):
 
         return combined_mask
 
-    def checkCornersOverlap(self, other_node):
+    def combineMask(self, other_node, merge_type='AND'):
+        """Alias for combine_mask()
+        """
+        return self.combine_mask(other_node=other_node, merge_type=merge_type)
+
+    def check_corners_overlap(self, other_node):
         """Check if ``self.mask`` and ``other_node.mask`` have any overlap based on the corners.
 
         :param other_node: Other node to check against.
@@ -181,7 +203,12 @@ class MaskObjNode(object):
             return False
         return True
 
-    def matchCorners(self, other_node):
+    def checkCornersOverlap(self, other_node):
+        """Alias for check_corners_overlap()
+        """
+        return self.check_corners_overlap(other_node)
+
+    def match_corners(self, other_node):
         """Compare ``self.mask`` and ``other_node.mask`` and pick out the smallest square that contain both masks.
 
         :param other_node: Other node to check against.
@@ -194,7 +221,12 @@ class MaskObjNode(object):
 
         return [corner_min, corner_max]
 
-    def checkMaskedAreaSize(self, mask=None):
+    def matchCorners(self, other_node):
+        """Alias for match_corners()
+        """
+        return self.match_corners(other_node=other_node)
+
+    def check_masked_area_size(self, mask=None):
         """Calculate the amount of pixels that are masked by ``self.mask``.
 
         :param mask: If a mask is provided then that mask is used instead of ``self.mask``. Defaults to ``None``.
@@ -206,7 +238,12 @@ class MaskObjNode(object):
 
         return np.size(np.where(mask == True)[0])
 
-    def expandMask(self, new_corners):
+    def checkMaskedAreaSize(self, mask=None):
+        """Alias for check_masked_area_size()
+        """
+        return self.check_masked_area_size(mask=mask)
+
+    def expand_mask(self, new_corners):
         """Expand ``self.mask`` so its corners match the `new_corners` provided.
 
         Masks are padded with 0s with the numpy function pad().
@@ -227,7 +264,12 @@ class MaskObjNode(object):
         j_pad_after = new_corners[1][1] - old_corners[1][1]
         return np.pad(mask, ((i_pad_before, i_pad_after), (j_pad_before, j_pad_after)), 'constant', constant_values=0)
 
-    def checkAreaSize(self, corners=None):
+    def expandMask(self, new_corners):
+        """Alias for expand_mask()
+        """
+        return self.expand_mask(new_corners)
+
+    def check_area_size(self, corners=None):
         """Calculate the square size of ``self.mask`` by looking at the dimensions from its corners.
 
         :param corners: If corners are provided then an area based on that corner is calculated. Defaults to ``None``.
@@ -240,7 +282,12 @@ class MaskObjNode(object):
 
         return (corners[1][0] - corners[0][0]) * (corners[1][1] - corners[0][1])
 
-    def getDimentions(self):
+    def checkAreaSize(self, corners=None):
+        """Alias for check_area_size()
+        """
+        return self.check_area_size(corners=corners)
+
+    def get_dimensions(self):
         """Calculate the pixel dimensions of the mask.
 
         :return: width, height
@@ -249,78 +296,57 @@ class MaskObjNode(object):
         height = self.corner_max[0] - self.corner_min[0]
         width = self.corner_max[1] - self.corner_min[1]
 
-        assert width > 0, "width is 0 or negative"
-        assert height > 0, "height is 0 or negative"
+        assert width > 0, 'width is 0 or negative'
+        assert height > 0, 'height is 0 or negative'
 
         return width, height
 
-    def getAR(self):
+    def getDimentions(self):
+        """Alias for get_dimensions()
+        """
+        return self.get_dimensions()
+
+    def get_ar(self):
         """Calculates the aspect ratio of the mask.
         Note this is NOT the aspect ratio of the masked area.
 
         :return: aspect ratio
         :rtype: float
         """
-        width, height = self.getDimentions()
+        width, height = self.get_dimensions()
 
         ar = float(width) / height
 
         if ar < 1:
             ar = float(height) / width
 
-        assert ar >= 1, "Aspect Ratio is less than 1"
+        assert ar >= 1, 'Aspect Ratio is less than 1'
 
         return ar
 
+    def getAR(self):
+        """Alias for get_ar()
+        """
+        return self.get_ar()
 
-def check_node_b_cutoff(node, hdr, b_cutoff=30):
-    """checks if the node is within the b_cutoff range
-    Arguments:
-        node {mask_node} -- node obj
-        hdr {fits.header} -- slice/cube FITS header
-    Keyword Arguments:
-        b_cutoff {int} -- latitude cutoff (default: {30})
-    Returns:
-        bool -- true if within cutoff, false if not
-    """
-    ys = [node.corner_min[0], node.corner_max[0]]
-    xs = [node.corner_min[1], node.corner_max[1]]
-
-    ras, decs = cube_util.index_to_radec(xs, ys, hdr)
-    ls, bs = cube_util.radecs_to_lb(ras, decs)
-
-    if bs[0] * bs[1] <= 0:
-        return True
-
-    if np.abs(bs[0]) >= b_cutoff and np.abs(bs[1]) >= b_cutoff:
-        return False
-    else:
-        return True
-
-
-def get_node_plot_corners(node):
-    """gets the x y plot corners for matplotlib
-    Arguments:
-        node {mask_node} -- node obj
-    """
-    return [node.corner_min[0], node.corner_max[1], node.corner_min[1], node.corner_max[1]]
-
-
-def fix_boarder_corners(mask, corners):
-    """ fix when masks are larger than corners indicated when near boarder
-    Arguments:
-        mask {np.array} -- mask
-        corners {list} -- of tuples
-    """
-    m_mask, n_mask = mask.shape
-    corners = [list(corners[0]), list(corners[1])]
-    if corners[1][0] - corners[0][0] != m_mask or corners[1][1] - corners[0][1] != n_mask:  # only check if issue
-        if corners[0][0] == 0:
-            corners[0][0] = -1
-        if corners[0][1] == 0:
-            corners[0][1] = -1
-        if corners[1][0] == galfa_const.GALFA_Y_STEPS - 1:
-            corners[1][0] = galfa_const.GALFA_Y_STEPS
-        if corners[1][1] == galfa_const.GALFA_X_STEPS - 1:
-            corners[1][1] = galfa_const.GALFA_X_STEPS
-    return corners
+    @staticmethod
+    def fix_boarder_corners(mask, corners):
+        """ fix when masks are larger than corners indicated when near boarder
+        Arguments:
+            mask {np.array} -- mask
+            corners {list} -- of tuples
+        """
+        m_mask, n_mask = mask.shape
+        corners = [list(corners[0]), list(corners[1])]
+        if corners[1][0] - corners[0][0] != m_mask \
+                or corners[1][1] - corners[0][1] != n_mask:  # only check if issue
+            if corners[0][0] == 0:
+                corners[0][0] = -1
+            if corners[0][1] == 0:
+                corners[0][1] = -1
+            # todo: take out GALFA specific things in this class
+            if corners[1][0] == galfa_const.GALFA_Y_STEPS - 1:
+                corners[1][0] = galfa_const.GALFA_Y_STEPS
+            if corners[1][1] == galfa_const.GALFA_X_STEPS - 1:
+                corners[1][1] = galfa_const.GALFA_X_STEPS
+        return corners

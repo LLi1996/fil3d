@@ -2,13 +2,14 @@
 tree visualization lib
 '''
 
-import numpy as np
-import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-from fil3d.util import moments
-from fil3d.structs import mask_obj_node as maskNode
+import matplotlib.pyplot as plt
+import numpy as np
+
 from fil3d.galfa import galfa_const
 from fil3d.galfa import galfa_util
+from fil3d.structs import util as struct_util
+from fil3d.util import moments
 from fil3d.vis import node_vis
 
 
@@ -27,9 +28,9 @@ def vis_tree_shadow(tree, tree_name, save_fig=False, save_dir=None, save_name=No
     starting_v = tree.root_v_slice
     length = tree.length
 
-    assert(tree.has_ended)
+    assert (tree.has_ended)
 
-    plot_corners = maskNode.get_node_plot_corners(root)
+    plot_corners = struct_util.get_node_plot_corners(root)
 
     if save_fig and save_name is None:
         save_name = tree_name
@@ -84,7 +85,8 @@ def vis_tree_mask_moment(mask_tree, tree_name, save_fig=False, save_dir=None,
                                           figsize=figsize, return_fig=return_fig)
 
 
-def vis_roundness_histogram(roundness_list, list_name, save_fig=False, save_dir=None, save_name=None, verbose=False, return_fig=False):
+def vis_roundness_histogram(roundness_list, list_name, save_fig=False, save_dir=None, save_name=None, verbose=False,
+                            return_fig=False):
     """roundness histogram from list of roundness measurement
     Arguments:
         roundness_list {np.array} -- of roundness measurement
@@ -209,7 +211,8 @@ def vis_trees_sky_dist_3_panels(trees, trees_name, vis_galactic_lines=True,
                extent=[0, galfa_const.GALFA_X_STEPS / 3., 0, galfa_const.GALFA_Y_STEPS, ],
                origin='lower')
     ax2.imshow([[], []],
-               extent=[galfa_const.GALFA_X_STEPS / 3., galfa_const.GALFA_X_STEPS / 3. * 2, 0, galfa_const.GALFA_Y_STEPS, ],
+               extent=[galfa_const.GALFA_X_STEPS / 3., galfa_const.GALFA_X_STEPS / 3. * 2, 0,
+                       galfa_const.GALFA_Y_STEPS, ],
                origin='lower')
     ax3.imshow([[], []],
                extent=[galfa_const.GALFA_X_STEPS / 3. * 2, galfa_const.GALFA_X_STEPS, 0, galfa_const.GALFA_Y_STEPS, ],
@@ -231,7 +234,7 @@ def vis_trees_sky_dist_3_panels(trees, trees_name, vis_galactic_lines=True,
 
 
 def vis_trees_sky_dist_names_3_panels(trees, trees_name, vis_galactic_lines=True,
-                                save_fig=False, save_dir=None, save_name=None, verbose=False, return_fig=False):
+                                      save_fig=False, save_dir=None, save_name=None, verbose=False, return_fig=False):
     """Plots all the masks in the trees dict at their
     Arguments:
         trees {dict} -- of maskTrees
@@ -278,7 +281,8 @@ def vis_trees_sky_dist_names_3_panels(trees, trees_name, vis_galactic_lines=True
                extent=[0, galfa_const.GALFA_X_STEPS / 3., 0, galfa_const.GALFA_Y_STEPS, ],
                origin='lower')
     ax2.imshow([[], []],
-               extent=[galfa_const.GALFA_X_STEPS / 3., galfa_const.GALFA_X_STEPS / 3. * 2, 0, galfa_const.GALFA_Y_STEPS, ],
+               extent=[galfa_const.GALFA_X_STEPS / 3., galfa_const.GALFA_X_STEPS / 3. * 2, 0,
+                       galfa_const.GALFA_Y_STEPS, ],
                origin='lower')
     ax3.imshow([[], []],
                extent=[galfa_const.GALFA_X_STEPS / 3. * 2, galfa_const.GALFA_X_STEPS, 0, galfa_const.GALFA_Y_STEPS, ],
@@ -318,7 +322,7 @@ def vis_trees_sky_dist_color_range(trees, trees_name, color_by, color_map_name, 
     ax = fig.add_subplot(111)
 
     div_cmaps = {'PiYG', 'PRGn', 'BrBG', 'PuOr', 'RdGy', 'RdBu', 'RdYlBu',
-                     'RdYlGn', 'Spectral', 'coolwarm', 'bwr', 'seismic'}
+                 'RdYlGn', 'Spectral', 'coolwarm', 'bwr', 'seismic'}
 
     cmap = cm.get_cmap(color_map_name)
     c_norm_max = float(max(v for v in list(color_by.values()) if v is not None))
@@ -348,7 +352,7 @@ def vis_trees_sky_dist_color_range(trees, trees_name, color_by, color_map_name, 
             this_mask = this_node.root_node.mask
             this_plot_corners = [this_node.root_node.corner_BL[0], this_node.root_node.corner_TR[0],
                                  this_node.root_node.corner_BL[1], this_node.root_node.corner_TR[1]]
-            ax.contour(this_mask, colors=(this_color, ), extent=this_plot_corners)
+            ax.contour(this_mask, colors=(this_color,), extent=this_plot_corners)
 
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=c_norm_min, vmax=c_norm_max))
     sm._A = []
@@ -370,7 +374,8 @@ def vis_trees_sky_dist_color_range(trees, trees_name, color_by, color_map_name, 
 
 def vis_trees_sky_dist_color_range_3_panels(trees, trees_name, color_by, color_map_name, vis_galactic_lines=True,
                                             fig_size=(7, 7), colorbar=True,
-                                            save_fig=False, save_dir=None, save_name=None, verbose=False, return_fig=False):
+                                            save_fig=False, save_dir=None, save_name=None, verbose=False,
+                                            return_fig=False):
     """Plots all the masks in the trees dict at their
     Arguments:
         trees {dict} -- of maskTrees
@@ -420,7 +425,7 @@ def vis_trees_sky_dist_color_range_3_panels(trees, trees_name, color_by, color_m
             this_plot_corners = [this_node.root_node.corner_BL[0], this_node.root_node.corner_TR[0],
                                  this_node.root_node.corner_BL[1], this_node.root_node.corner_TR[1]]
             for ax in axs:
-                ax.contour(this_mask, colors=(this_color, ), extent=this_plot_corners)
+                ax.contour(this_mask, colors=(this_color,), extent=this_plot_corners)
 
     if vis_galactic_lines:
         for b in np.linspace(-90, 90, 7):
@@ -441,7 +446,8 @@ def vis_trees_sky_dist_color_range_3_panels(trees, trees_name, color_by, color_m
                extent=[0, galfa_const.GALFA_X_STEPS / 3., 0, galfa_const.GALFA_Y_STEPS],
                origin='lower')
     ax2.imshow([[], []],
-               extent=[galfa_const.GALFA_X_STEPS / 3., galfa_const.GALFA_X_STEPS / 3. * 2, 0, galfa_const.GALFA_Y_STEPS],
+               extent=[galfa_const.GALFA_X_STEPS / 3., galfa_const.GALFA_X_STEPS / 3. * 2, 0,
+                       galfa_const.GALFA_Y_STEPS],
                origin='lower')
     ax3.imshow([[], []],
                extent=[galfa_const.GALFA_X_STEPS / 3. * 2, galfa_const.GALFA_X_STEPS, 0, galfa_const.GALFA_Y_STEPS],
