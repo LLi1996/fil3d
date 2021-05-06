@@ -8,8 +8,11 @@ LL2017
 """
 
 import logging
-
 import pickle
+
+import numpy as np
+
+from fil3d.util import cube_util
 
 
 def node_key_hash(original_key):
@@ -187,3 +190,36 @@ def pre_v001_pickle_load(file_obj, encoding='latin1', **kwargs):
     :return: See ``pickle.load()``.
     """
     return PreV001Unpickler(file_obj, encoding=encoding, **kwargs).load()
+
+
+def check_node_b_cutoff(node, hdr, b_cutoff=30):
+    """checks if the node is within the b_cutoff range
+    Arguments:
+        node {mask_node} -- node obj
+        hdr {fits.header} -- slice/cube FITS header
+    Keyword Arguments:
+        b_cutoff {int} -- latitude cutoff (default: {30})
+    Returns:
+        bool -- true if within cutoff, false if not
+    """
+    ys = [node.corner_min[0], node.corner_max[0]]
+    xs = [node.corner_min[1], node.corner_max[1]]
+
+    ras, decs = cube_util.index_to_radec(xs, ys, hdr)
+    ls, bs = cube_util.radecs_to_lb(ras, decs)
+
+    if bs[0] * bs[1] <= 0:
+        return True
+
+    if np.abs(bs[0]) >= b_cutoff and np.abs(bs[1]) >= b_cutoff:
+        return False
+    else:
+        return True
+
+
+def get_node_plot_corners(node):
+    """gets the x y plot corners for matplotlib
+    Arguments:
+        node {mask_node} -- node obj
+    """
+    return [node.corner_min[0], node.corner_max[1], node.corner_min[1], node.corner_max[1]]

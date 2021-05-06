@@ -5,7 +5,6 @@ import logging
 import numpy as np
 
 from fil3d.galfa import galfa_const
-from fil3d.util import cube_util
 
 
 class MaskObjNode(object):
@@ -36,13 +35,13 @@ class MaskObjNode(object):
         :type corners: List[List, List]
 
         :param v_slice_index: Index of the velocity channel.
-        :type v_slice_index: int
+        :type v_slice_index: Union[List[Int], int]
 
         """
 
         self.mask = mask_obj
-        corners = fix_boarder_corners(self.mask, corners)
 
+        corners = self.fix_boarder_corners(self.mask, corners)
         # corners are [(top left)[i,j],(bottom right)[i,j]]
         # organize corners into list of lists instead of list of tups and convert into [x,y]
         self.corners_original = corners
@@ -50,20 +49,26 @@ class MaskObjNode(object):
         self.corner_min = self.corners_original[0]
         self.corner_max = self.corners_original[1]
         for i in range(2):
-            assert self.corner_max[i] > self.corner_min[i]
+            assert self.corner_max[i] > self.corner_min[i], 'corners seem messed up'
         # should really just use corners_original and stick to np indexing
         # for future references use self.corners_original
-        # other fields preserved for backward compatibility
+        # other fields preserved for backwards compatibility
 
-        self.v_slice_index = [v_slice_index]
+        if isinstance(v_slice_index, list):
+            self.v_slice_index = v_slice_index
+        else:
+            self.v_slice_index = [v_slice_index]
 
         self.visited = False
+
         self.mask_size = self.check_area_size()
+        assert self.mask_size == self.mask.shape[0] * self.mask.shape[1], 'mask size and corner mismatch'
+
         self.masked_area_size = self.check_masked_area_size()
 
     def __eq__(self, other: MaskObjNode) -> bool:
-        if not isinstance(other, MaskObjNode) or \
-                not np.array_equal(self.mask, other.mask) \
+        if not isinstance(other, MaskObjNode) \
+                or not np.array_equal(self.mask, other.mask) \
                 or self.corners_original != other.corners_original \
                 or self.v_slice_index != other.v_slice_index \
                 or self.visited != other.visited:
@@ -324,55 +329,24 @@ class MaskObjNode(object):
         """
         return self.get_ar()
 
-
-def check_node_b_cutoff(node, hdr, b_cutoff=30):
-    """checks if the node is within the b_cutoff range
-    Arguments:
-        node {mask_node} -- node obj
-        hdr {fits.header} -- slice/cube FITS header
-    Keyword Arguments:
-        b_cutoff {int} -- latitude cutoff (default: {30})
-    Returns:
-        bool -- true if within cutoff, false if not
-    """
-    ys = [node.corner_min[0], node.corner_max[0]]
-    xs = [node.corner_min[1], node.corner_max[1]]
-
-    ras, decs = cube_util.index_to_radec(xs, ys, hdr)
-    ls, bs = cube_util.radecs_to_lb(ras, decs)
-
-    if bs[0] * bs[1] <= 0:
-        return True
-
-    if np.abs(bs[0]) >= b_cutoff and np.abs(bs[1]) >= b_cutoff:
-        return False
-    else:
-        return True
-
-
-def get_node_plot_corners(node):
-    """gets the x y plot corners for matplotlib
-    Arguments:
-        node {mask_node} -- node obj
-    """
-    return [node.corner_min[0], node.corner_max[1], node.corner_min[1], node.corner_max[1]]
-
-
-def fix_boarder_corners(mask, corners):
-    """ fix when masks are larger than corners indicated when near boarder
-    Arguments:
-        mask {np.array} -- mask
-        corners {list} -- of tuples
-    """
-    m_mask, n_mask = mask.shape
-    corners = [list(corners[0]), list(corners[1])]
-    if corners[1][0] - corners[0][0] != m_mask or corners[1][1] - corners[0][1] != n_mask:  # only check if issue
-        if corners[0][0] == 0:
-            corners[0][0] = -1
-        if corners[0][1] == 0:
-            corners[0][1] = -1
-        if corners[1][0] == galfa_const.GALFA_Y_STEPS - 1:
-            corners[1][0] = galfa_const.GALFA_Y_STEPS
-        if corners[1][1] == galfa_const.GALFA_X_STEPS - 1:
-            corners[1][1] = galfa_const.GALFA_X_STEPS
-    return corners
+    @staticmethod
+    def fix_boarder_corners(mask, corners):
+        """ fix when masks are larger than corners indicated when near boarder
+        Arguments:
+            mask {np.array} -- mask
+            corners {list} -- of tuples
+        """
+        m_mask, n_mask = mask.shape
+        corners = [list(corners[0]), list(corners[1])]
+        if corners[1][0] - corners[0][0] != m_mask \
+                or corners[1][1] - corners[0][1] != n_mask:  # only check if issue
+            if corners[0][0] == 0:
+                corners[0][0] = -1
+            if corners[0][1] == 0:
+                corners[0][1] = -1
+            # todo: take out GALFA specific things in this class
+            if corners[1][0] == galfa_const.GALFA_Y_STEPS - 1:
+                corners[1][0] = galfa_const.GALFA_Y_STEPS
+            if corners[1][1] == galfa_const.GALFA_X_STEPS - 1:
+                corners[1][1] = galfa_const.GALFA_X_STEPS
+        return corners
