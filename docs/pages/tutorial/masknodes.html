@@ -66,7 +66,7 @@ calculated by counting the amount of pixels that’s masked (marked TRUE in the 
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>mask_obj</strong> (<em>np.array</em>) – 2D bit mask.</p></li>
 <li><p><strong>corners</strong> (<em>List</em><em>[</em><em>List</em><em>, </em><em>List</em><em>]</em>) – Corners of mask. In [&lt;top left&gt;, &lt;bottom right&gt;] format when (0, 0) is at top left.         This usually translates to [[y0, x0], [y1, x1]] in np indexing.</p></li>
-<li><p><strong>v_slice_index</strong> (<em>int</em>) – Index of the velocity channel.</p></li>
+<li><p><strong>v_slice_index</strong> (<em>Union</em><em>[</em><em>List</em><em>[</em><em>Int</em><em>]</em><em>, </em><em>int</em><em>]</em>) – Index of the velocity channel.</p></li>
 </ul>
 </dd>
 </dl>
@@ -209,6 +209,14 @@ is then made to that dimension. Elements of the new mask are filled basked on th
 <dd class="field-odd"><p>np.array</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fil3d.structs.MaskObjNode.fix_boarder_corners">
+<em class="property"><span class="pre">static</span> </em><code class="sig-name descname"><span class="pre">fix_boarder_corners</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mask</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">corners</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fil3d.structs.MaskObjNode.fix_boarder_corners" title="Permalink to this definition">¶</a></dt>
+<dd><p>fix when masks are larger than corners indicated when near boarder
+:param mask {np.array} – mask:
+:param corners {list} – of tuples:</p>
 </dd></dl>
 
 <dl class="py method">
