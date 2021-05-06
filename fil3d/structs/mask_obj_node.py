@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 
 import numpy as np
@@ -58,6 +60,16 @@ class MaskObjNode(object):
         self.visited = False
         self.mask_size = self.check_area_size()
         self.masked_area_size = self.check_masked_area_size()
+
+    def __eq__(self, other: MaskObjNode) -> bool:
+        if not isinstance(other, MaskObjNode) or \
+                not np.array_equal(self.mask, other.mask) \
+                or self.corners_original != other.corners_original \
+                or self.v_slice_index != other.v_slice_index \
+                or self.visited != other.visited:
+            return False
+        else:
+            return True
 
     def merge_node(self, other_node):
         """Merge ``other_node`` with self.

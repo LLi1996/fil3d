@@ -29,12 +29,7 @@ def test_unpickling(v001_pickle_path, pre_v001_py2_pickle_path):
     assert isinstance(node_v001, MaskObjNode)
     assert isinstance(node_pre_v001, MaskObjNode)
 
-    assert_array_equal(node_v001.mask, node_pre_v001.mask)
-    assert node_v001.corners_original == node_pre_v001.corners_original
-    assert node_v001.v_slice_index == node_pre_v001.v_slice_index
-    assert node_v001.visited == node_pre_v001.visited
-    assert node_v001.mask_size == node_pre_v001.mask_size
-    assert node_v001.masked_area_size == node_pre_v001.masked_area_size
+    assert node_v001 == node_pre_v001
 
 
 @pytest.mark.parametrize('pre_v001_py2_pickle_path', [
@@ -84,3 +79,15 @@ def test_MaskObjNode(mask, corners, v_index, expected_mask_size, expected_mask_a
     assert not node.visited
     assert node.mask_size == expected_mask_size
     assert node.masked_area_size == expected_mask_area_size
+
+
+@pytest.mark.parametrize('node_a, node_b, is_equal', [
+    (MaskObjNode(np.zeros((3, 6), bool), [[0, 0], [3, 6]], 0),
+     MaskObjNode(np.zeros((3, 6), bool), [[0, 0], [3, 6]], 0),
+     True),
+    (MaskObjNode(np.zeros((3, 6), bool), [[0, 0], [3, 6]], 0),
+     MaskObjNode(np.ones((6, 4), bool), [[1, 3], [7, 7]], 9),
+     False)
+])
+def test___eq__(node_a, node_b, is_equal):
+    assert (node_a == node_b) == is_equal
