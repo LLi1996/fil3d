@@ -58,7 +58,7 @@ Quickstart
 ----------
 
 We separate data and masks. Data in this case refer to data cubes, data slices, FITS files, numpy arrays, etc. -
-whatever you use to to store your data. Masks in this case refers to a 2D numpy array bit-mask ( =and the associated
+whatever you use to to store your data. Masks in this case refers to a 2D numpy array bit-mask (and the associated
 corners of that mask). Masks are the primary objects in most parts of the program - velocity-aware mask objects are
 compared, merged, and stacked to create representations (bounds) of filaments in 3D (P-P-V) space that we call trees.
 When we need pixel values to analyse individual filaments, these collections of masks (trees) are used to pull values
