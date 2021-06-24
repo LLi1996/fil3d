@@ -33,7 +33,7 @@
           <div class="body" role="main">
             
   <div class="section" id="d-filament-mask-containers-masknodes">
-<h1>2D filament mask containers (MaskNodes)<a class="headerlink" href="#d-filament-mask-containers-masknodes" title="Permalink to this headline">¶</a></h1>
+<span id="maskobjnode-label"></span><h1>2D filament mask containers (MaskNodes)<a class="headerlink" href="#d-filament-mask-containers-masknodes" title="Permalink to this headline">¶</a></h1>
 <div class="toctree-wrapper compound">
 </div>
 <p>To use, do:</p>
@@ -70,6 +70,15 @@ calculated by counting the amount of pixels that’s masked (marked TRUE in the 
 </ul>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fil3d.structs.MaskObjNode.add_node_to_dict">
+<em class="property"><span class="pre">static</span> </em><code class="sig-name descname"><span class="pre">add_node_to_dict</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dictionary</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fil3d.structs.MaskObjNode.add_node_to_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds a node to a dictionary
+prevents key overlapping by hashing
+:param node {MaskObjNode} – node to be added:
+:param dictionary {dict} – of nodes:</p>
 </dd></dl>
 
 <dl class="py method">
@@ -304,6 +313,14 @@ The combined or mask is set as the new <code class="docutils literal notranslate
 <dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">True</span></code></p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="fil3d.structs.MaskObjNode.node_key_hash">
+<em class="property"><span class="pre">static</span> </em><code class="sig-name descname"><span class="pre">node_key_hash</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">original_key</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fil3d.structs.MaskObjNode.node_key_hash" title="Permalink to this definition">¶</a></dt>
+<dd><p>Simple linear probing resolution of key collision
+in format: masked_area_size + ‘_’ + some number
+:param original_key {str} – original key with overlap:</p>
 </dd></dl>
 
 </dd></dl>

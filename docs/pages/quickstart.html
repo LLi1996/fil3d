@@ -42,17 +42,21 @@
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip install fil3d
 </pre></div>
 </div>
-<p>Or you can install directly from this repo by (this will always fetch <code class="docutils literal notranslate"><span class="pre">HEAD</span></code>, not 100% working yet):</p>
+<p>Or you can install directly from this repo (this will always fetch <code class="docutils literal notranslate"><span class="pre">HEAD</span></code> - do this for now if you just want to
+use the package):</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip install git+https://github.com/LLi1996/fil3d
 </pre></div>
 </div>
-<p>Or you can install directly from this repo in editable mode (this will always fetch <code class="docutils literal notranslate"><span class="pre">HEAD</span></code> and might be useful
-if you want to poke around the code as well):</p>
+<p>Or you can install directly from this repo in editable mode (this will always fetch <code class="docutils literal notranslate"><span class="pre">HEAD</span></code> - do this if you want to
+use the package and maybe poke around the code as well):</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip install -e git+https://github.com/LLi1996/fil3d#egg<span class="o">=</span>fil3d
 </pre></div>
 </div>
-<p>Or you can install with <code class="docutils literal notranslate"><span class="pre">setup.py</span></code> after cloning this repo locally by:</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>python setup.py install
+<p>Of course you can also just install with <code class="docutils literal notranslate"><span class="pre">setup.py</span></code> after cloning this repo locally (this is the same as pip install
+-e but with more steps):</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/LLi1996/fil3d.git
+<span class="nb">cd</span> fil3d
+python setup.py install
 </pre></div>
 </div>
 </div>
@@ -70,10 +74,138 @@ if you want to poke around the code as well):</p>
 <p>Optional:</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>filfinder (<a class="reference external" href="https://fil-finder.readthedocs.io/en/latest/">docs</a>)</p></li>
+<li><p>FilFinder (<a class="reference external" href="https://fil-finder.readthedocs.io/en/latest/">docs</a>)</p></li>
 </ul>
 </div></blockquote>
-<p># TODO: notes on the different version of filfinder and the modification to be done to filfinder objs to pull out the masks</p>
+</div>
+<div class="section" id="quickstart">
+<h2>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this headline">¶</a></h2>
+<p>We separate data and masks. Data in this case refer to data cubes, data slices, FITS files, numpy arrays, etc. -
+whatever you use to to store your data. Masks in this case refers to a 2D numpy array bit-mask ( =and the associated
+corners of that mask). Masks are the primary objects in most parts of the program - velocity-aware mask objects are
+compared, merged, and stacked to create representations (bounds) of filaments in 3D (P-P-V) space that we call trees.
+When we need pixel values to analyse individual filaments, these collections of masks (trees) are used to pull values
+out of whatever data storage systems / formats that you prefer.</p>
+<p>2D mask container objects are the base units. A mask object can be instantiated with three components: 1) the 2D
+bit mask (this is self-explanatory), 2) the corners which matches the dimensions of this 2D bit mask (this will be used
+to locate the mask within the greater data slice/cube, so that this mask can be compared to other masks and this mask
+object can be used to select data from your data files), and 3) the index of the velocity channel where this mask
+belongs (it is important that you assign some sequential ordering to your velocity slices - it doesn’t matter if you
+choose ascending or descending - but note that mask objects which do not reside on neighboring velocity slices will not
+be considered for matching later in the program).</p>
+<div class="section" id="using-your-own-masks">
+<h3>Using your own masks<a class="headerlink" href="#using-your-own-masks" title="Permalink to this headline">¶</a></h3>
+<p>If you already have masks lying around, you can plug those into the base
+<a class="reference internal" href="tutorial/masknodes.html#maskobjnode-label"><span class="std std-ref">2D filament mask containers (MaskNodes)</span></a>, like this:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">fil3d</span> <span class="kn">import</span> <span class="n">MaskObjNode</span>
+
+<span class="c1"># some 4x4 mask, with 6 pixels ON and 10 pixels OFF</span>
+<span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                   <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                   <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                   <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]],</span> <span class="nb">bool</span><span class="p">)</span>
+
+<span class="c1"># [[y0, x0], [y1, x1]] in numpy indexing, note our 4x4 mask needs to fit in the corners</span>
+<span class="n">corners</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+           <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">]]</span>
+<span class="c1"># let&#39;s say this mask is for data residing on the third velocity slice in your collection</span>
+<span class="n">v_index</span> <span class="o">=</span> <span class="mi">2</span>
+
+<span class="n">mask_obj</span> <span class="o">=</span> <span class="n">MaskObjNode</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">corners</span><span class="p">,</span> <span class="n">v_index</span><span class="p">)</span>
+
+
+<span class="c1"># if you have multiple of these masks and their corners and velocity indexes:</span>
+<span class="n">mask_obj_dict</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="k">for</span> <span class="n">mask_obj</span> <span class="ow">in</span> <span class="n">list_of_mask_objs</span><span class="p">:</span>
+    <span class="n">MaskObjNode</span><span class="o">.</span><span class="n">add_node_to_dict</span><span class="p">(</span><span class="n">mask_obj</span><span class="p">,</span> <span class="n">mask_obj_dict</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="getting-masks-from-filfinder">
+<h3>Getting masks from FilFinder<a class="headerlink" href="#getting-masks-from-filfinder" title="Permalink to this headline">¶</a></h3>
+<p>If you are using <a class="reference external" href="https://fil-finder.readthedocs.io/en/latest/">FilFinder</a>, you can pluck the masks and corners from
+<code class="docutils literal notranslate"><span class="pre">FilFinder2D</span></code> objects that you’ve already created. To do so, you have to set <code class="docutils literal notranslate"><span class="pre">capture_pre_recombine_masks=True</span></code> at
+object instantiation to enable the caching of masks before they’re combined into a single skeleton.</p>
+<p>Currently this feature is in preview for FilFinder 1.18 (as of 2021-06-24, the latest pip-installable version on pypi
+is 1.17). Don’t worry though - you can still access this feature by directly building FilFinder from the source repo
+master like this:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip install git+https://github.com/e-koch/FilFinder
+</pre></div>
+</div>
+<p>After running <code class="docutils literal notranslate"><span class="pre">create_mask()</span></code> with <code class="docutils literal notranslate"><span class="pre">use_existing_mask=False</span></code>, you will be able to access the
+<code class="docutils literal notranslate"><span class="pre">pre_recombine_mask_objs</span></code> and <code class="docutils literal notranslate"><span class="pre">pre_recombine_mask_corners</span></code> properties of the instance. For this quick start
+run-through, we’ll be using a data cube with a few injected filaments located on the github repo under
+<code class="docutils literal notranslate"><span class="pre">data/examples/fil_injection/</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">astropy</span> <span class="kn">import</span> <span class="n">units</span> <span class="k">as</span> <span class="n">u</span>
+<span class="kn">from</span> <span class="nn">astropy.io.fits</span> <span class="kn">import</span> <span class="n">Header</span>
+<span class="kn">from</span> <span class="nn">fil_finder</span> <span class="kn">import</span> <span class="n">FilFinder2D</span>
+<span class="kn">from</span> <span class="nn">fil3d</span> <span class="kn">import</span> <span class="n">MaskObjNode</span>
+
+<span class="c1"># 50 x 300 x 500 data cube (v, y, x)</span>
+<span class="n">data_cube</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;data/examples/fil_injection/fil_injection.npz&#39;</span><span class="p">)[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span>
+
+<span class="c1"># let&#39;s say the image fed into FilFinder resides on the third velocity slice in your collection</span>
+<span class="n">v_index</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">data_slice</span> <span class="o">=</span> <span class="n">data_cube</span><span class="p">[</span><span class="n">v_index</span><span class="p">]</span>
+
+<span class="c1"># creating a fake header to make our lives a little easier</span>
+<span class="n">hdr</span> <span class="o">=</span> <span class="n">Header</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span>
+    <span class="n">CTYPE1</span><span class="o">=</span><span class="s1">&#39;RA&#39;</span><span class="p">,</span>
+    <span class="n">CDELT1</span><span class="o">=-</span><span class="mf">0.0166667</span><span class="p">,</span>
+    <span class="n">CTYPE2</span><span class="o">=</span><span class="s1">&#39;DEC&#39;</span><span class="p">,</span>
+    <span class="n">CDELT2</span><span class="o">=</span><span class="mf">0.0166667</span><span class="p">,</span>
+    <span class="n">BUNIT</span><span class="o">=</span><span class="s1">&#39;K&#39;</span>
+<span class="p">))</span>
+<span class="c1"># most of this follows the FilFinder2D docs</span>
+<span class="n">fil</span> <span class="o">=</span> <span class="n">FilFinder2D</span><span class="p">(</span><span class="n">data_slice</span><span class="p">,</span>
+                  <span class="n">header</span><span class="o">=</span><span class="n">hdr</span><span class="p">,</span>
+                  <span class="n">distance</span><span class="o">=</span><span class="mf">100.</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">pc</span><span class="p">,</span>
+                  <span class="n">beamwidth</span><span class="o">=</span><span class="mi">10</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">arcmin</span><span class="p">,</span>
+                  <span class="n">capture_pre_recombine_masks</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">fil</span><span class="o">.</span><span class="n">preprocess_image</span><span class="p">(</span><span class="n">flatten_percent</span><span class="o">=</span><span class="mi">95</span><span class="p">)</span>
+<span class="n">fil</span><span class="o">.</span><span class="n">create_mask</span><span class="p">()</span>
+
+<span class="c1"># there might be multiple masks in a single FilFinder2D instance</span>
+<span class="c1"># here we store them in a dictionary for ease of access, with an arbitrary numerical key</span>
+<span class="n">mask_obj_dict</span> <span class="o">=</span> <span class="p">{}</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">fil</span><span class="o">.</span><span class="n">pre_recombine_mask_objs</span><span class="p">)):</span>
+    <span class="n">MaskObjNode</span><span class="o">.</span><span class="n">add_node_to_dict</span><span class="p">(</span><span class="n">MaskObjNode</span><span class="p">(</span><span class="n">fil</span><span class="o">.</span><span class="n">pre_recombine_mask_objs</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                                             <span class="n">fil</span><span class="o">.</span><span class="n">pre_recombine_mask_corners</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                                             <span class="n">v_index</span><span class="p">),</span>
+                                 <span class="n">mask_obj_dict</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="going-from-2d-masks-to-3d-trees">
+<h3>Going from 2D masks to 3D trees<a class="headerlink" href="#going-from-2d-masks-to-3d-trees" title="Permalink to this headline">¶</a></h3>
+<p>One of the main advantanges of working with masks is that we don’t have to carry data around when we’re performing mask
+matching operations between velocity slices. For the purpose of this tutorial, we’ll be using processed dictionaries of
+masks for each velocity channel in the example data cube stored in github under
+<code class="docutils literal notranslate"><span class="pre">data/examples/fil_injection/mask_dictionaries/</span></code>.</p>
+<p>Using the process outlined in <a class="reference internal" href="tutorial/buildingtrees.html#maskstotrees-label"><span class="std std-ref">Going from 2D to 3D</span></a>, we match mask objects on neighboring velocity channels to
+build “trees” in the 3D (P-P-V) space. The utility function <code class="docutils literal notranslate"><span class="pre">find_all_trees_from_slices()</span></code> can be used like this:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pickle</span>
+
+<span class="kn">from</span> <span class="nn">fil3d.util.tree_dict_util</span> <span class="kn">import</span> <span class="n">find_all_trees_from_slices</span>
+
+<span class="n">velocity_channels</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span>
+<span class="n">mask_dict_paths</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;data/examples/fil_injection/mask_dictionaries/</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.PICKLE&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">50</span><span class="p">)]</span>
+
+<span class="n">tree_dict</span> <span class="o">=</span> <span class="n">find_all_trees_from_slices</span><span class="p">(</span><span class="n">vs</span><span class="o">=</span><span class="n">velocity_channels</span><span class="p">,</span>
+                                       <span class="n">dict_full_paths</span><span class="o">=</span><span class="n">mask_dict_paths</span><span class="p">,</span>
+                                       <span class="n">overlap_thresh</span><span class="o">=.</span><span class="mi">85</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This will return a dictionary of trees.</p>
+</div>
+<div class="section" id="using-trees-to-access-data">
+<h3>Using trees to access data<a class="headerlink" href="#using-trees-to-access-data" title="Permalink to this headline">¶</a></h3>
+<p>WIP</p>
+</div>
 </div>
 </div>
 
@@ -99,6 +231,7 @@ if you want to poke around the code as well):</p>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Getting started</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#requirements">Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#quickstart">Quickstart</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial/index.html">Tutorial</a></li>

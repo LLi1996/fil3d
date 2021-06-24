@@ -9,25 +9,17 @@ LL2017
 
 import logging
 import pickle
+import warnings
 
 import numpy as np
 
+from fil3d.structs import MaskObjNode
 from fil3d.util import cube_util
 
 
 def node_key_hash(original_key):
-    """Hash them node keys
-    in format: masked_area_size + '_' + some number
-    Arguments:
-        original_key {str} -- original key with overlap
-    """
-    key_base = original_key.rsplit('_', 1)[0]
-    key_num = int(original_key.rsplit('_', 1)[1])
-
-    key_num += 1
-
-    new_key = key_base + '_' + str(key_num)
-    return new_key
+    warnings.warn('use MaskObjNode.add_node_to_dict instead.', DeprecationWarning)
+    return MaskObjNode.node_key_hash(original_key=original_key)
 
 
 def node_key_unhash(key):
@@ -46,19 +38,16 @@ def node_key_unhash(key):
 
 
 def add_node_to_dict(node, dictionary):
-    """Adds the node to the dictionary
-    prevents key overlapping by hashing
-    Arguments:
-        node {MaskObjNode} -- node to be added
-        dictionary {dict} -- of nodes
-    """
-    key = str(node.masked_area_size)
-    key += '_0'
+    warnings.warn('use MaskObjNode.add_node_to_dict instead.', DeprecationWarning)
+    MaskObjNode.add_node_to_dict(node=node, dictionary=dictionary)
 
-    while key in dictionary:
-        key = node_key_hash(key)
 
-    dictionary[key] = node
+def node_key_hashable(key):
+    try:
+        _ = node_key_unhash(key)
+        return True
+    except Exception as e:
+        return False
 
 
 def tree_key_hash(original_key):

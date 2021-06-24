@@ -1,3 +1,5 @@
+.. _MaskObjNode-label:
+
 2D filament mask containers (MaskNodes)
 =======================================
 
