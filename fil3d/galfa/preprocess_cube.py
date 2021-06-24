@@ -11,7 +11,7 @@ from astropy import units as u
 import os
 import pickle
 import warnings
-from fil3d.structs import util as struct_util
+
 from fil3d.util import cube_util
 from fil_finder import FilFinder2D
 from fil3d.structs import mask_obj_node
@@ -161,6 +161,6 @@ def process_dataslice_filfind_struct(data, hdr, slice_v_index):
     else:
         for i in range(len(mask_objs)):
             this_mask_node = mask_obj_node.MaskObjNode(mask_objs[i], corners[i], slice_v_index)
-            struct_util.add_node_to_dict(this_mask_node, nodes_in_dataslice)
+            mask_obj_node.MaskObjNode.add_node_to_dict(this_mask_node, nodes_in_dataslice)
 
     return nodes_in_dataslice

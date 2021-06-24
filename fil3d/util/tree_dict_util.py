@@ -4,11 +4,10 @@ outputting distribution for a dicts of trees
 """
 
 import logging
-
-import sys
 import pickle
+
 import numpy as np
-from fil3d.structs import mask_obj_node as maskNode
+
 from fil3d.structs import mask_obj_node_tree as maskTree
 from fil3d.structs import util as struct_util
 from fil3d.util import moments
@@ -58,8 +57,8 @@ def find_all_trees_from_slices(vs, dict_full_paths, overlap_thresh=.85, reverse_
         continuous_tree_keys_set = end_noncontinuous_trees(trees, vs[i])
         delete_short_dead_trees(trees)
 
-        #del nodes_in_v_slice
-
+    _ = end_noncontinuous_trees(trees, vs[-1] + 1)
+    delete_short_dead_trees(trees)
     return trees
 
 

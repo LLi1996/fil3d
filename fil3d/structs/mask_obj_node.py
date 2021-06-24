@@ -350,3 +350,31 @@ class MaskObjNode(object):
             if corners[1][1] == galfa_const.GALFA_X_STEPS - 1:
                 corners[1][1] = galfa_const.GALFA_X_STEPS
         return corners
+
+    @staticmethod
+    def node_key_hash(original_key: str):
+        """Simple linear probing resolution of key collision
+        in format: masked_area_size + '_' + some number
+        Arguments:
+            original_key {str} -- original key with overlap
+        """
+        key_base = original_key.rsplit('_', 1)[0]
+        key_num = int(original_key.rsplit('_', 1)[1]) + 1
+        return key_base + '_' + str(key_num)
+
+    @staticmethod
+    def add_node_to_dict(node,
+                         dictionary: dict):
+        """Adds a node to a dictionary
+        prevents key overlapping by hashing
+        Arguments:
+            node {MaskObjNode} -- node to be added
+            dictionary {dict} -- of nodes
+        """
+        key = str(node.masked_area_size)
+        key += '_0'
+
+        while key in dictionary:
+            key = MaskObjNode.node_key_hash(key)
+
+        dictionary[key] = node
