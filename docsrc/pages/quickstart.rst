@@ -99,6 +99,12 @@ If you already have masks lying around, you can plug those into the base
     mask_obj = MaskObjNode(mask, corners, v_index)
 
 
+    # if you have multiple of these masks and their corners and velocity indexes:
+    mask_obj_dict = {}
+    for mask_obj in list_of_mask_objs:
+        MaskObjNode.add_node_to_dict(mask_obj, mask_obj_dict)
+
+
 Getting masks from FilFinder
 ____________________________
 
@@ -116,7 +122,9 @@ master like this:
 
 
 After running ``create_mask()`` with ``use_existing_mask=False``, you will be able to access the
-``pre_recombine_mask_objs`` and ``pre_recombine_mask_corners`` properties of the instance like this:
+``pre_recombine_mask_objs`` and ``pre_recombine_mask_corners`` properties of the instance. For this quick start
+run-through, we'll be using a data cube with a few injected filaments located on the github repo under
+``data/examples/fil_injection/``.
 
 .. code-block:: python
 
@@ -124,7 +132,7 @@ After running ``create_mask()`` with ``use_existing_mask=False``, you will be ab
 
     from astropy import units as u
     from astropy.io.fits import Header
-    from fil_finder import FilFinder2d
+    from fil_finder import FilFinder2D
     from fil3d import MaskObjNode
 
     # 50 x 300 x 500 data cube (v, y, x)
@@ -156,7 +164,41 @@ After running ``create_mask()`` with ``use_existing_mask=False``, you will be ab
     mask_obj_dict = {}
 
     for i in range(len(fil.pre_recombine_mask_objs)):
-        mask_obj_dict[i] = MaskObjNode(fil.pre_recombine_mask_objs[i],
-                                       fil.pre_recombine_mask_corners[i],
-                                       v_index)
+        MaskObjNode.add_node_to_dict(MaskObjNode(fil.pre_recombine_mask_objs[i],
+                                                 fil.pre_recombine_mask_corners[i],
+                                                 v_index),
+                                     mask_obj_dict)
 
+
+Going from 2D masks to 3D trees
+_______________________________
+
+One of the main advantanges of working with masks is that we don't have to carry data around when we're performing mask
+matching operations between velocity slices. For the purpose of this tutorial, we'll be using processed dictionaries of
+masks for each velocity channel in the example data cube stored in github under
+``data/examples/fil_injection/mask_dictionaries/``.
+
+Using the process outlined in :ref:`MasksToTrees-label`, we match mask objects on neighboring velocity channels to
+build "trees" in the 3D (P-P-V) space. The utility function ``find_all_trees_from_slices()`` can be used like this:
+
+
+.. code-block:: python
+
+    import pickle
+
+    from fil3d.util.tree_dict_util import find_all_trees_from_slices
+
+    velocity_channels = range(50)
+    mask_dict_paths = [f'data/examples/fil_injection/mask_dictionaries/{i}.PICKLE' for i in range(50)]
+
+    tree_dict = find_all_trees_from_slices(vs=velocity_channels,
+                                           dict_full_paths=mask_dict_paths,
+                                           overlap_thresh=.85)
+
+This will return a dictionary of trees.
+
+
+Using trees to access data
+__________________________
+
+WIP

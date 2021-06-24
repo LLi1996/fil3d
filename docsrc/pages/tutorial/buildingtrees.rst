@@ -1,3 +1,5 @@
+.. _MasksToTrees-label:
+
 Going from 2D to 3D
 ===================
 
