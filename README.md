@@ -1,5 +1,14 @@
 # Fil3D
 
+### TODO
+- quick start addition: how to mitigate potential memory issues
+- Search for all GALFA related constants and remove/make them user configurable
+- Add a faster algorithm for mask matching
+- Add a class wrapper for using trees to access data from underlying data cubes (nice to have)
+- Add a class wrapper for constructing trees from masks (nice to have)
+- Add a few example notebooks with non-injected filaments and images (nice to have)
+- Cleanup around the visualization modules (nice to have)
+
 
 ### Links
 - [Docs](https://lli1996.github.io/fil3d/)
