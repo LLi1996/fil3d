@@ -4,13 +4,15 @@ utility functions related to cleaning data cubes
 LL2017
 
 """
-from astropy.coordinates import SkyCoord as coord
-from astropy.io import fits
 import logging
 import math
-import numpy as np
 import os
+
+import numpy as np
 import scipy.ndimage
+from astropy.coordinates import SkyCoord
+from astropy.io import fits
+from astropy.wcs import WCS
 
 
 def circ_kern(diameter):
@@ -22,7 +24,7 @@ def circ_kern(diameter):
     for umask step
     """
     assert diameter % 2
-    r = diameter // 2   # int(np.floor(diameter / 2))
+    r = diameter // 2  # int(np.floor(diameter / 2))
     mnvals = np.indices((diameter, diameter)) - r
     rads = np.hypot(mnvals[0], mnvals[1])
     return np.less_equal(rads, r).astype(np.int)
@@ -88,7 +90,7 @@ def radecs_to_lb(ras, decs):
 
     for lb masks
     """
-    obj = coord(ras, decs, unit="deg", frame="icrs")
+    obj = SkyCoord(ras, decs, unit="deg", frame="icrs")
     obj = obj.galactic
 
     ls = obj.l.degree
@@ -104,7 +106,7 @@ def lbs_to_radecs(ls, bs, remin=False):
     taken from https://github.com/seclark/FITSHandling/commit/f04a6e54c6624741e4f3077ba8ba96af620871ac
     """
     assert len(ls) == len(bs)
-    obj = coord(ls, bs, unit="deg", frame="galactic")
+    obj = SkyCoord(ls, bs, unit="deg", frame="galactic")
     obj = obj.icrs
 
     ras = obj.ra.degree
@@ -144,3 +146,22 @@ def umask_and_save(data, hdr, save_dir, file_name, radius=None, umask_filter=Non
     fits.writeto(save_path, umask_data, header=hdr)
 
     return umask_data
+
+
+def cube_transfer(data_cube,
+                  hdr: fits.Header):
+    """ Compute the coordinate transfer for the whole cube
+    From Avery
+    Returns to imshow extent coordinates
+    """
+    w = WCS(hdr)
+    lenv, leny, lenx = data_cube.shape
+    square = np.array([[0, 0, 0],
+                       [0, leny, 0],
+                       [lenx, 0, 0],
+                       [lenx, leny, 0]])
+    translated = w.wcs_pix2world(square, 1)[:, :2]
+    ra_min, dec_min = translated[0]
+    ra_max, dec_max = translated[-1]
+    coord_list = np.array([ra_max, ra_min, dec_min, dec_max])
+    return coord_list
