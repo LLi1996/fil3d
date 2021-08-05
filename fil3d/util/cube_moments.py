@@ -7,7 +7,7 @@ LL2018
 
 import numpy as np
 
-from fil3d.galfa import galfa_const
+from fil3d import _const
 from fil3d.galfa import galfa_util
 
 
@@ -44,7 +44,7 @@ def moment_0_from_cube(data_cube, mask=None):
         else:
             moment_0_map = np.add(moment_0_map, mask_map_2d(s, mask))
 
-    moment_0_map = moment_0_map * galfa_const.GALFA_W_SLICE_SEPARATION
+    moment_0_map = moment_0_map * _const.CDELT_V
 
     return moment_0_map
 
@@ -70,7 +70,7 @@ def moment_1_from_cube(data_cube, starting_v_index, v_length, mask=None):
         else:
             moment_1_map = np.add(moment_1_map, mask_map_2d(s, mask))
 
-    moment_1_map = moment_1_map * galfa_const.GALFA_W_SLICE_SEPARATION / moment_0_map
+    moment_1_map = moment_1_map * _const.CDELT_V / moment_0_map
 
     return moment_1_map
 
@@ -91,19 +91,19 @@ def moment_2_from_cube(data_cube, starting_v_index, v_length, mask=None):
     moment_0_map = moment_0_from_cube(data_cube, mask=mask)
     for i in range(v_length):
         v_index = starting_v_index + i
-        s = data_cube[i] * (galfa_util.galfa_v_lookup_from_index(v_index) - moment_1_map)**2
+        s = data_cube[i] * (galfa_util.galfa_v_lookup_from_index(v_index) - moment_1_map) ** 2
         if mask is None:
             moment_2_map = np.add(moment_2_map, s)
         else:
             moment_2_map = np.add(moment_2_map, mask_map_2d(s, mask))
 
-    moment_2_map = (moment_2_map * galfa_const.GALFA_W_SLICE_SEPARATION / moment_0_map)**(.5)
+    moment_2_map = (moment_2_map * _const.CDELT_V / moment_0_map) ** (.5)
 
     return moment_2_map
 
 
 def column_density_from_moment_0_map(moment_0_map):
-    return (1.823 * 10**18) * moment_0_map
+    return (1.823 * 10 ** 18) * moment_0_map
 
 
 def column_density_from_cube(data_cube, mask=None):
