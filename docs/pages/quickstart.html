@@ -93,6 +93,9 @@ object can be used to select data from your data files), and 3) the index of the
 belongs (it is important that you assign some sequential ordering to your velocity slices - it doesn’t matter if you
 choose ascending or descending - but note that mask objects which do not reside on neighboring velocity slices will not
 be considered for matching later in the program).</p>
+<p>Note: you should set the <code class="docutils literal notranslate"><span class="pre">fil3d._const.NAXIS_X</span></code> and <code class="docutils literal notranslate"><span class="pre">fil3d._const.NAXIS_Y</span></code> values. If not set they will default to
+the GALFA full slice values. These constants are used to make sure that <code class="docutils literal notranslate"><span class="pre">MaskObjNode</span></code> objects do not contain out of
+bound corners.</p>
 <div class="section" id="using-your-own-masks">
 <h3>Using your own masks<a class="headerlink" href="#using-your-own-masks" title="Permalink to this headline">¶</a></h3>
 <p>If you already have masks lying around, you can plug those into the base
