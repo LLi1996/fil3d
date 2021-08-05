@@ -345,10 +345,10 @@ class MaskObjNode(object):
             if corners[0][1] == 0:
                 corners[0][1] = -1
             # todo: take out GALFA specific things in this class
-            if corners[1][0] == _const.Y_STEPS - 1:
-                corners[1][0] = _const.Y_STEPS
-            if corners[1][1] == _const.X_STEPS - 1:
-                corners[1][1] = _const.X_STEPS
+            if corners[1][0] == _const.NAXIS_Y - 1:
+                corners[1][0] = _const.NAXIS_Y
+            if corners[1][1] == _const.NAXIS_X - 1:
+                corners[1][1] = _const.NAXIS_X
         return corners
 
     @staticmethod

@@ -2,7 +2,9 @@
 Shared constants to be used in package
 """
 
-# corners
 
-X_STEPS = None
-Y_STEPS = None
+NAXIS_X = None
+NAXIS_Y = None
+NAXIS_V = None
+
+CDELT_V = None
