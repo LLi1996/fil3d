@@ -72,6 +72,9 @@ belongs (it is important that you assign some sequential ordering to your veloci
 choose ascending or descending - but note that mask objects which do not reside on neighboring velocity slices will not
 be considered for matching later in the program).
 
+Note: you should set the ``fil3d._const.NAXIS_X`` and ``fil3d._const.NAXIS_Y`` values. If not set they will default to
+the GALFA full slice values. These constants are used to make sure that ``MaskObjNode`` objects do not contain out of
+bound corners.
 
 Using your own masks
 ____________________
